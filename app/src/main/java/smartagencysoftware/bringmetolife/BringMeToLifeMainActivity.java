@@ -17,6 +17,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
     public static Activity mainActivity;
     static Context context;
+    static  Handler uiHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +56,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     }
 
 
-    static  Handler uiHandler = new Handler();
+
     public static void postInHandler(final String string){
         uiHandler.post(new Runnable() {
             @Override
@@ -66,5 +67,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             }
         });
     }
+
 
 }

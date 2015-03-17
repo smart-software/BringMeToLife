@@ -1,21 +1,25 @@
 package smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.Dialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.IBinder;
-import android.speech.RecognizerResultsIntent;
 import android.util.Log;
-import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.parse.FunctionCallback;
 import com.parse.Parse;
 import com.parse.ParseCloud;
@@ -33,11 +37,10 @@ import java.util.TimerTask;
 import smartagencysoftware.bringmetolife.BringMeToLifeMainActivity;
 
 public class BringMeToLifeService extends Service {
-    final String locationProvider = LocationManager.NETWORK_PROVIDER;// Or use LocationManager.GPS_PROVIDER
-    private LocationManager locationManager;
     private Location lastKnownLocation = null;
     private Location oldLastKnownLocation = null;
     private ActivityManager mActivityManager = null;
+    private GoogleApiClient mGoogleApiClient = null;
 
     public BringMeToLifeService() {
     }
@@ -56,8 +59,72 @@ public class BringMeToLifeService extends Service {
         Parse.enableLocalDatastore(this);
         Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
 
-        locationManager = (LocationManager) this.getSystemService(getApplicationContext().LOCATION_SERVICE);
+        //Check if Google play Services is avaliable
+        int resultCode =   GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
 
+        switch (resultCode){
+            case ConnectionResult.SUCCESS:
+                break;
+            case ConnectionResult.SERVICE_MISSING:
+            case ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED:
+            case ConnectionResult.SERVICE_DISABLED:
+                Dialog dialog = GooglePlayServicesUtil.getErrorDialog(resultCode, BringMeToLifeMainActivity.mainActivity, 1);
+                dialog.show();
+                break;
+            default:
+                break;
+        }
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(new ConnectionCallbacks())
+                            .addOnConnectionFailedListener(new ConnectionFailedListener()).addApi(LocationServices.API)
+                            .build();
+    }
+
+    private class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
+
+        @Override
+        public void onConnected(Bundle bundle) {
+            startLocationUpdates();
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+
+        }
+    }
+
+    private void startLocationUpdates() {
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                mGoogleApiClient, createLocationRequest(), createLocationListener());
+    }
+
+    private LocationRequest createLocationRequest() {
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(1000*60*7);
+        mLocationRequest.setFastestInterval(1000*60*3);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        return mLocationRequest;
+    }
+
+    private LocationListener createLocationListener(){
+     return new LocationChangeListener();
+    }
+
+
+    private class LocationChangeListener implements LocationListener {
+
+        @Override
+        public void onLocationChanged(Location location) {
+            //something can happen here, if necessary TODO
+        }
+    }
+
+    private class ConnectionFailedListener implements GoogleApiClient.OnConnectionFailedListener{
+
+        @Override
+        public void onConnectionFailed(ConnectionResult connectionResult) {
+
+        }
     }
 
     @Override
@@ -68,10 +135,12 @@ public class BringMeToLifeService extends Service {
             public void run() {
                 CheckLifeTask checkLife = new CheckLifeTask();
                 checkLife.execute();
-            }}, 0L, 60L * 1000*10); // before first launch: 0, launch every 10 minutes
+            }}, 1000L, 60L * 1000*10); // before first launch: 1 sec, launch every 10 minutes
 
         return super.onStartCommand(intent, flags, startId);
     }
+
+
 
     class CheckLifeTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -87,20 +156,11 @@ public class BringMeToLifeService extends Service {
     }
 
     private boolean checkLife(){
-
-
-        lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
-        /*//debug
-        lastKnownLocation = new Location("dummylocationprovider");
-        oldLastKnownLocation = new Location("dummylocationprovider");
-        lastKnownLocation.setLatitude(11); lastKnownLocation.setLongitude(11);
-        oldLastKnownLocation.setLatitude(10); oldLastKnownLocation.setLongitude(10);
-
-        //debug
-        */
+        // wonder if mGoogleApiClient is ready by now...  TODO
+        lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (oldLastKnownLocation!=null){
             float distance = lastKnownLocation.distanceTo(oldLastKnownLocation);
-            if (distance > 5) {
+            if (distance > 5) { //five meters
                 double latitude = lastKnownLocation.getLatitude();
                 double longitude = lastKnownLocation.getLongitude();
                 ParseGeoPoint point = new ParseGeoPoint(latitude, longitude);
@@ -142,6 +202,7 @@ public class BringMeToLifeService extends Service {
                 });
             }
         }
+        oldLastKnownLocation = lastKnownLocation;
         return true; //true == checkLife started
     }
 
