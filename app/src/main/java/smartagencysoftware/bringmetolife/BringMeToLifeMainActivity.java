@@ -10,6 +10,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.parse.Parse;
+import com.parse.ParseUser;
+
 import smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
 
 
@@ -25,6 +28,12 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_bring_me_to_life_main);
         mainActivity = this;
         context = getApplicationContext();
+        Parse.enableLocalDatastore(this);
+        Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
+        if(ParseUser.getCurrentUser() == null){
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+        }
     }
 
     @Override
