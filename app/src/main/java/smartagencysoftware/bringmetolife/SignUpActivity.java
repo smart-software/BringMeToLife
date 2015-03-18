@@ -70,7 +70,7 @@ public class SignUpActivity extends Activity{
 
                             if (e == null) {
                                 // Success!
-                                Intent intent = new Intent(SignUpActivity.this, MainActivityMipe.class);
+                                Intent intent = new Intent(SignUpActivity.this, BringMeToLifeMainActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 startActivity(intent);

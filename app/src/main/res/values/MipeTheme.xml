@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <style name="MipeTheme.MainActivity" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:actionBarStyle">@style/MipeTheme.ActionBar</item>
+        <item name="actionBarStyle">@style/MipeTheme.ActionBar</item>
+        <item name="android:textColor">@color/MipeTheme.text.basic.gray</item>
+
+    </style>
+
+    <style name="MipeTheme.ActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@color/MipeTheme.main.deep</item>
+        <item name="android:height">30dp</item>
+        <item name="android:titleTextStyle">@style/MipeTheme.ActionBar.TitleText</item>
+        <item name="titleTextStyle">@style/MipeTheme.ActionBar.TitleText</item>
+        <item name="height">30dp</item>
+        <item name="background">@color/MipeTheme.main.deep</item>
+    </style>
+
+    <style name="MipeTheme.ActionBar.TitleText" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="MipeTheme.Buttons.Bottom" parent="@style/MipeTheme.MainActivity">
+        <item name="android:padding">3dp</item>
+    </style>
+    
+    <style name="MipeTheme.Title.Background" parent="@style/MipeTheme.MainActivity">
+        <item name="android:background">@color/MipeTheme.main.deep</item>
+    </style>
+    
+    <style name="MipeTheme.Buttons.Simple" parent="@style/MipeTheme.MainActivity">
+        <item name="android:textAppearance">@android:style/TextAppearance.Large</item>
+        <item name="android:shadowColor">#A8A8A8</item>
+        <item name="android:padding">1dp</item>
+        <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:layout_marginRight">10dp</item>
+    </style>
+    
+    <!-- TabWidget stuff -->
+    <style name="MipeTheme.Tab.Widget" parent="@style/MipeTheme.MainActivity">
+    	<item name="android:tabWidgetStyle">@style/MipeTheme.Tab.Widget.Main</item>
+   	</style>
+	<style name="MipeTheme.Tab.Widget.Main" parent="@android:style/Widget.TabWidget">
+    	<item name="android:textAppearance">@style/CustomTabWidgetText</item>
+    	<item name="android:background">@color/MipeTheme.tab.green</item>
+	</style>
+	<style name="CustomTabWidgetText" parent="@android:style/TextAppearance.Widget.TabWidget">
+	    <!-- for custom tab widget text size -->
+	</style>
+
+    <style name="MipeTheme.FloatingActivity" parent="MipeTheme.MainActivity">
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
+    <color name="MipeTheme.background.bright">#69F0AE</color>
+    <color name="MipeTheme.tab.green">#5D9648</color>
+    <color name="MipeTheme.additional.green.light">#ABC99C</color>
+    <color name="MipeTheme.additional.purple">#B59EFC</color>
+    <color name="MipeTheme.logobackground.blue.pastellight">#00C853</color>
+    <color name="MipeTheme.main.deep">#00C853</color>
+    <color name="MipeTheme.main.middle">#00E676</color>
+    <color name="MipeTheme.main.light">#69F0AE</color>
+    <color name="MipeTheme.main.attribute">#1565C0</color>
+
+    <color name="MipeTheme.text.basic.gray">#535348</color>
+
+    <color name="MipeTheme.additional.facebook.blue">#4e69a2</color>
+
+
+
+	
+</resources>

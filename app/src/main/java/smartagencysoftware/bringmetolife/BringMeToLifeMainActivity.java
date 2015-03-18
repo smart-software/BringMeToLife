@@ -8,9 +8,12 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.parse.Parse;
+import com.parse.ParseAnonymousUtils;
+import com.parse.ParseCrashReporting;
 import com.parse.ParseUser;
 
 import smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
@@ -21,6 +24,9 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     public static Activity mainActivity;
     static Context context;
     static  Handler uiHandler = new Handler();
+    private TextView fullUsername;
+    private TextView socialRank;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,17 +35,29 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         mainActivity = this;
         context = getApplicationContext();
         Parse.enableLocalDatastore(this);
+        ParseCrashReporting.enable(this);
         Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
-        if(ParseUser.getCurrentUser() == null){
+        ParseUser.enableAutomaticUser();
+        if(ParseUser.getCurrentUser() == null){ //barely possible with AutomaaticUser enabled
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
         }
+        fullUsername = (TextView)findViewById(R.id.fullusername);
+        socialRank = (TextView)findViewById(R.id.socialrank);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         startService( new Intent(this, BringMeToLifeService.class));
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (ParseAnonymousUtils.isLinked(currentUser)){
+            fullUsername.setText("Anonymous");
+        }
+        else {
+            fullUsername.setText(currentUser.getUsername());
+            socialRank.setText(currentUser.getString("socialRank"));
+        }
     }
 
     @Override

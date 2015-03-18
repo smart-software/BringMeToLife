@@ -116,14 +116,6 @@ public class LoginActivity extends Activity {
         });
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        if(ParseUser.getCurrentUser()==null){
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            LayoutInflater inflater = this.getLayoutInflater();
-            builder.setView(inflater.inflate(R.layout.dialog_teach, null))
-                    .setPositiveButton(android.R.string.ok, null);
-            builder.create();
-            builder.show();
-        }
     }
 
     @Override
@@ -134,7 +126,7 @@ public class LoginActivity extends Activity {
     }
 
     private void gotoMainActivity() {
-        Intent intent = new Intent(this, MainActivityMipe.class);
+        Intent intent = new Intent(this, BringMeToLifeMainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

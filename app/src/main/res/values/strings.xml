@@ -3,4 +3,45 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <string name="title_section1" translatable="false">Mipe Flip!</string>
+    <string name="title_section2">New Mipe</string>
+    <string name="title_section3">Statistics</string>
+    <string name="navigation_drawer_open" translatable="false">Open navigation drawer</string>
+    <string name="navigation_drawer_close" translatable="false">Close navigation drawer</string>
+    <string name="action_example" translatable="false">Example action</string>
+    <string name="app_id" translatable="false">1525120017751386</string>
+    <string name="title_facebook_login">facebook login</string>
+    <string name="alert_avatar_image_changed">Avatar image changed.</string>
+    <string name="alert_login_or_pass_empty">Login or password is empty</string>
+    <string name="alert_error_message">Error message</string>
+    <string name="alert_login_error">Login error.</string>
+    <string name="options_link_facebook">link Facebook</string>
+    <string name="options_log_off">log off</string>
+    <string name="options_about">about</string>
+    <string name="options_title">Options</string>
+    <string name="alert_success_link_facebook">You successfully linked your account to Facebook!</string>
+    <string name="alert_login_before_link">Login before linking account.</string>
+    <string name="alert_cant_signup_empty_fields">Cant sign up because of empty fields</string>
+    <string name="alert_sign_error">Sign up error</string>
+    <string name="alert_error_uploading_usage_data">Error loading data. Try again by hitting upload button.</string>
+    <string name="alert_seen_all_images">Congratulations! You have seen all images in Mipe! Now please load more yourself!</string>
+    <string name="alert_enter_some_hashtags">Enter some hashtags</string>
+    <string name="alert_hashtags_must_be_less_than">Hashtag must be less than 13 length</string>
+    <string name="alert_image_uploaded">Image uploaded!</string>
+    <string name="alert_not_enough_stats">Not enough statistics yet. Watch more images.</string>
+    <string name="stats_plot_title">Your most viewed hashtags</string>
+    <string name="stats_y_label">Stare time, ms</string>
+    <string name="teach_how_to_use_mipe">How to use Mipe:</string>
+    <string name="teach_look">Look</string>
+    <string name="teach_at_images">at images</string>
+    <string name="teach_stare_time">Stare time</string>
+    <string name="teach_like_time">= like time</string>
+    <string name="teach_wonder">Wonder</string>
+    <string name="teach_statistics">statistics</string>
+    <string name="login_username">username</string>
+    <string name="login_password">password</string>
+    <string name="login_button_login">Login</string>
+    <string name="login_login_with_facebook">Login with Facebook</string>
+    <string name="login_sign_up">sign up</string>
 </resources>

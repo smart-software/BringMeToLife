@@ -5,9 +5,11 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Dialog;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -21,7 +23,6 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.parse.FunctionCallback;
-import com.parse.Parse;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
@@ -36,11 +37,20 @@ import java.util.TimerTask;
 
 import smartagencysoftware.bringmetolife.BringMeToLifeMainActivity;
 
+import static android.content.Intent.ACTION_SCREEN_OFF;
+import static android.content.Intent.ACTION_SCREEN_ON;
+
 public class BringMeToLifeService extends Service {
     private Location lastKnownLocation = null;
     private Location oldLastKnownLocation = null;
     private ActivityManager mActivityManager = null;
     private GoogleApiClient mGoogleApiClient = null;
+    private ScreenReceiver mScreenReceiver;
+
+    //social time counters
+    private int counterFB,counterIN,counterVK,counterWA,counterVI,counterOK,counterNone = 0;
+    private boolean screenIsOn;
+    private Timer timerSocial;
 
     public BringMeToLifeService() {
     }
@@ -56,8 +66,8 @@ public class BringMeToLifeService extends Service {
         super.onCreate();
 
         // Enable Local Datastore.
-        Parse.enableLocalDatastore(this);
-        Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
+        //Parse.enableLocalDatastore(this);
+        //Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
 
         //Check if Google play Services is avaliable
         int resultCode =   GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
@@ -129,6 +139,7 @@ public class BringMeToLifeService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        createSocialTimer();
         Timer myTimer = new Timer();
         myTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -136,11 +147,19 @@ public class BringMeToLifeService extends Service {
                 CheckLifeTask checkLife = new CheckLifeTask();
                 checkLife.execute();
             }}, 1000L, 60L * 1000*10); // before first launch: 1 sec, launch every 10 minutes
+        IntentFilter screenStateFilter = new IntentFilter();
+        screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
+        screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(mScreenReceiver, screenStateFilter);
 
         return super.onStartCommand(intent, flags, startId);
     }
 
-
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mScreenReceiver);
+    }
 
     class CheckLifeTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -152,6 +171,41 @@ public class BringMeToLifeService extends Service {
         @Override
         protected void onPostExecute(Boolean result) {
             //txtResult.setText(result);
+        }
+    }
+
+    class CheckSocialAppsAsync extends AsyncTask<Void, Void, Void> {
+        private int secsAdd;
+        CheckSocialAppsAsync(int secsAdd) {
+            this.secsAdd = secsAdd;
+        }
+
+        @Override
+        protected Void doInBackground(Void... noargs) {
+            String socialNetwork = checkSocialApps();
+            switch (socialNetwork){
+                case "facebook":
+                    counterFB+=secsAdd;
+                    break;
+                case "instagram":
+                    counterIN+=secsAdd;
+                case "vkontakte":
+                    counterVK+=secsAdd;
+                case "whatsapp":
+                    counterWA+=secsAdd;
+                    break;
+                case "viber":
+                    counterVI+=secsAdd;
+                    break;
+                case "odnoklassniki":
+                    counterOK+=secsAdd;
+                    break;
+                case "none":
+                    counterNone+=secsAdd;
+                    break;
+            }
+            Log.d("CheckSocialAppsAsync", "Social network: "+socialNetwork+"+with secs added: "+secsAdd);
+            return null;
         }
     }
 
@@ -171,31 +225,7 @@ public class BringMeToLifeService extends Service {
                         if (e == null) {
                             for (ParseUser friend: result){
                                 Log.d("checkNearFriends", "success: "+ friend);
-                                ArrayList<RunningAppProcessInfo> appProcessInfo = getForegroundApp();
-                                if(appProcessInfo!=null) {
-                                    ArrayList<String> processInfo = new ArrayList<String>();
-                                    for (RunningAppProcessInfo info: appProcessInfo){
-                                        processInfo.add(info.processName);
-                                    }
-                                    if (processInfo.contains("com.facebook.katana")){
-                                        BringMeToLifeMainActivity.postInHandler("Facebook is foreground!");
-                                    }
-                                    if (processInfo.contains("com.instagram.android")){
-                                        BringMeToLifeMainActivity.postInHandler("Instagram is foreground!");
-                                    }
-                                    if (processInfo.contains("com.vkontakte.android")){
-                                        BringMeToLifeMainActivity.postInHandler("Vkontakte is foreground!");
-                                    }
-                                    if (processInfo.contains("com.whatsapp")){
-                                        BringMeToLifeMainActivity.postInHandler("WhatsApp is foreground!");
-                                    }
-                                    if (processInfo.contains("com.viber.voip")){
-                                        BringMeToLifeMainActivity.postInHandler("Viber is foreground!");
-                                    }
-                                    if (processInfo.contains("ru.ok.android")){
-                                        BringMeToLifeMainActivity.postInHandler("Odnoklassniki is foreground!");
-                                    }
-                                }
+                                checkSocialApps();
                             }
                         }
                     }
@@ -206,8 +236,34 @@ public class BringMeToLifeService extends Service {
         return true; //true == checkLife started
     }
 
-    private ArrayList<RunningAppProcessInfo> getForegroundApp() {
-        ArrayList<RunningAppProcessInfo> result= new ArrayList<RunningAppProcessInfo>();
+    private String checkSocialApps() {
+        String appProcesName = getForegroundApp().processName;
+        String result = "none";
+        switch (appProcesName){
+            case "com.facebook.katana":
+                result = "facebook";
+                break;
+            case "com.instagram.android":
+                result = "instagram";
+                break;
+            case "com.vkontakte.android":
+                result = "vkontakte";
+                break;
+            case "com.whatsapp":
+                result = "whatsapp";
+                break;
+            case "com.viber.voip":
+                result = "viber";
+                break;
+            case "ru.ok.android":
+                result = "odnoklassniki";
+                break;
+        }
+        return result;
+    }
+
+    private RunningAppProcessInfo getForegroundApp() {
+        RunningAppProcessInfo result= null;
         RunningAppProcessInfo info=null;
 
         if(mActivityManager==null)
@@ -219,7 +275,8 @@ public class BringMeToLifeService extends Service {
             info = i.next();
             if(info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND
                     /*&& !isRunningService(info.processName)*/){
-                result.add(info);
+                result=info;
+                return result;
             }
         }
         return result;
@@ -257,7 +314,7 @@ public class BringMeToLifeService extends Service {
         if(process==null)
             return false;
 
-        RunningAppProcessInfo currentFg=getForegroundApp().get(0); // getForegroundApp().get(0) - ONLY FOR REVERSE COMPATIBILITY
+        RunningAppProcessInfo currentFg=getForegroundApp(); // getForegroundApp().get(0) - ONLY FOR REVERSE COMPATIBILITY
         ComponentName currentActivity=getActivityForApp(currentFg);
 
         if(currentFg!=null && currentFg.processName.equals(process.processName) &&
@@ -290,4 +347,56 @@ public class BringMeToLifeService extends Service {
         return false;
     }
 
+    public class ScreenReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("ScreenReceiver", "Received!");
+            String code = intent.getAction();
+            switch (code){
+                case ACTION_SCREEN_ON:
+                    screenIsOn = true;
+                    createSocialTimer();
+                    break;
+                case ACTION_SCREEN_OFF:
+                    screenIsOn = false;
+                    timerSocial.cancel();
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+
+    private void createSocialTimer() {
+        timerSocial = new Timer();
+        timerSocial.scheduleAtFixedRate(new TimerTask() {
+            int[] intervals = {5,5,10,10,10,20,30,30,60};
+            int currentInterval = 0;
+            int intervalSecsLeft = 0;
+
+            @Override
+            public void run() {
+
+                if(screenIsOn==true){
+                    if(currentInterval<(intervals.length-1)){
+                        intervalSecsLeft = intervals[currentInterval]-5; //magic! TODO redo. 5 - is interval for socialTimer
+                    }
+                    else {
+                        intervalSecsLeft = intervals.length-1;
+                    }
+
+                    if (intervalSecsLeft == 0){
+                        currentInterval+= 1;
+                        CheckSocialAppsAsync checkSocialAppsAsync = new CheckSocialAppsAsync(intervals[currentInterval]);
+                        checkSocialAppsAsync.execute();
+                    }
+                }
+                else {
+                    currentInterval = 0;
+                    intervalSecsLeft = 0;
+                }
+            }
+        }, 0L, 5L*1000); // before first launch: 0 sec, launch every 5 sec
+    }
 }
