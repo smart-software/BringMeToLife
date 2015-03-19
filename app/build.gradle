@@ -5,7 +5,7 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "smartagencysoftware.bringmetolife"
+        applicationId "com.smartagencysoftware.bringmetolife"
         minSdkVersion 11
         targetSdkVersion 19
         maxSdkVersion 19;

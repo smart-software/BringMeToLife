@@ -1,4 +1,4 @@
-package smartagencysoftware.bringmetolife;
+package com.smartagencysoftware.bringmetolife;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

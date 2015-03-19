@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="smartagencysoftware.bringmetolife" >
+    package="com.com.smartagencysoftware.bringmetolife" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".BringMeToLifeMainActivity"
+            android:name="com.smartagencysoftware.bringmetolife.BringMeToLifeMainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,11 +22,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity" android:label="Login" android:theme="@style/MipeTheme.FloatingActivity" />
-        <activity android:name=".SignUpActivity" android:label="Sign Up" android:theme="@style/MipeTheme.FloatingActivity"/>
+        <activity android:name="com.smartagencysoftware.bringmetolife.LoginActivity" android:label="Login" android:theme="@style/MipeTheme.FloatingActivity" />
+        <activity android:name="com.smartagencysoftware.bringmetolife.SignUpActivity" android:label="Sign Up" android:theme="@style/MipeTheme.FloatingActivity"/>
 
         <service
-            android:name=".smartagencysoftware.bringmetolife.service.BringMeToLifeService"
+            android:name="com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService"
             android:enabled="true"
             android:exported="true" >
         </service>

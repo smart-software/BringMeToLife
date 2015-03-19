@@ -1,4 +1,4 @@
-package smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service;
+package com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -28,19 +29,19 @@ import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseUser;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import smartagencysoftware.bringmetolife.BringMeToLifeMainActivity;
+import com.smartagencysoftware.bringmetolife.BringMeToLifeMainActivity;
 
 import static android.content.Intent.ACTION_SCREEN_OFF;
 import static android.content.Intent.ACTION_SCREEN_ON;
 
 public class BringMeToLifeService extends Service {
+    private static Handler uiHandler = new Handler();
     private Location lastKnownLocation = null;
     private Location oldLastKnownLocation = null;
     private ActivityManager mActivityManager = null;
@@ -48,7 +49,7 @@ public class BringMeToLifeService extends Service {
     private ScreenReceiver mScreenReceiver;
 
     //social time counters
-    private int counterFB,counterIN,counterVK,counterWA,counterVI,counterOK,counterNone = 0;
+    private int counterFB,counterIN,counterVK,counterWA,counterVI,counterOK,counterNone, counterOverall = 0;
     private boolean screenIsOn;
     private Timer timerSocial;
 
@@ -139,7 +140,18 @@ public class BringMeToLifeService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        createSocialTimer();
+        Log.d("StartService", "intent is "+intent);
+        if (intent.getAction()!=null && intent.getAction().equals("com.smartagencysoftware.bringmetolife.service.BringMeToLifeService")) {
+            String value = intent.getStringExtra("Command");
+            switch (value){
+                case "checkFriends":
+                    launchParseCheckNearFriends();
+                    break;
+            }
+            return START_NOT_STICKY;
+        }
+
+
         Timer myTimer = new Timer();
         myTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -150,10 +162,15 @@ public class BringMeToLifeService extends Service {
         IntentFilter screenStateFilter = new IntentFilter();
         screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        mScreenReceiver = new ScreenReceiver();
         registerReceiver(mScreenReceiver, screenStateFilter);
+        screenIsOn = true;
+        createSocialTimer(); // assume that at service start the screen is ON
 
         return super.onStartCommand(intent, flags, startId);
     }
+
+
 
     @Override
     public void onDestroy() {
@@ -204,6 +221,7 @@ public class BringMeToLifeService extends Service {
                     counterNone+=secsAdd;
                     break;
             }
+            counterOverall+=secsAdd;
             Log.d("CheckSocialAppsAsync", "Social network: "+socialNetwork+"+with secs added: "+secsAdd);
             return null;
         }
@@ -214,26 +232,50 @@ public class BringMeToLifeService extends Service {
         lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (oldLastKnownLocation!=null){
             float distance = lastKnownLocation.distanceTo(oldLastKnownLocation);
-            if (distance > 5) { //five meters
-                double latitude = lastKnownLocation.getLatitude();
-                double longitude = lastKnownLocation.getLongitude();
-                ParseGeoPoint point = new ParseGeoPoint(latitude, longitude);
-                HashMap<String, ParseGeoPoint> params = new HashMap<String, ParseGeoPoint>();
-                params.put("geopoint", point);
-                ParseCloud.callFunctionInBackground("checkNearFriends", params, new FunctionCallback<List<ParseUser>>() {
-                    public void done(List<ParseUser> result, ParseException e) {
-                        if (e == null) {
-                            for (ParseUser friend: result){
-                                Log.d("checkNearFriends", "success: "+ friend);
-                                checkSocialApps();
-                            }
-                        }
-                    }
-                });
-            }
+            //DEBUG
+            distance = 6;
+            if (distance > 5) launchParseCheckNearFriends();
         }
         oldLastKnownLocation = lastKnownLocation;
         return true; //true == checkLife started
+    }
+
+    private void launchParseCheckNearFriends() {
+        //five meters
+        double latitude = lastKnownLocation.getLatitude();
+        double longitude = lastKnownLocation.getLongitude();
+        ParseGeoPoint point = new ParseGeoPoint(latitude, longitude);
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("geopoint", point);
+        params.put("facebook", counterFB);
+        params.put("instagram", counterIN);
+        params.put("vkontakte", counterVK);
+        params.put("whatsapp", counterWA);
+        params.put("viber", counterVI);
+        params.put("odnoklassniki", counterOK);
+        params.put("none", counterNone);
+        params.put("overall",counterOverall);
+
+        ParseCloud.callFunctionInBackground("checkNearFriends", params, new FunctionCallback<List<ParseUser>>() {
+            public void done(List<ParseUser> result, ParseException e) {
+                if (e == null) {
+                    for (ParseUser friend : result) {
+                        Log.d("checkNearFriends", "success: " + friend);
+
+                    }
+                    BringMeToLifeMainActivity.postInHandler("You have " + result.size() + " friends near: " + result);
+                    counterFB = 0;
+                    counterIN = 0;
+                    counterVK = 0;
+                    counterWA = 0;
+                    counterVI = 0;
+                    counterOK = 0;
+                    counterNone = 0;
+                    counterOverall = 0;
+
+                }
+            }
+        });
     }
 
     private String checkSocialApps() {
@@ -373,24 +415,25 @@ public class BringMeToLifeService extends Service {
         timerSocial.scheduleAtFixedRate(new TimerTask() {
             int[] intervals = {5,5,10,10,10,20,30,30,60};
             int currentInterval = 0;
-            int intervalSecsLeft = 0;
+            int intervalSecsLeft = 5; //for the first timer "run"
 
             @Override
             public void run() {
 
                 if(screenIsOn==true){
-                    if(currentInterval<(intervals.length-1)){
-                        intervalSecsLeft = intervals[currentInterval]-5; //magic! TODO redo. 5 - is interval for socialTimer
-                    }
-                    else {
-                        intervalSecsLeft = intervals.length-1;
-                    }
 
+                    intervalSecsLeft-=5;
                     if (intervalSecsLeft == 0){
-                        currentInterval+= 1;
                         CheckSocialAppsAsync checkSocialAppsAsync = new CheckSocialAppsAsync(intervals[currentInterval]);
                         checkSocialAppsAsync.execute();
+                        currentInterval+= 1;
+                        if(currentInterval>=intervals.length){
+                            currentInterval = intervals.length-1; //magic! TODO redo. 5 - is interval for socialTimer
+                        }
+                        intervalSecsLeft = intervals[currentInterval];
                     }
+
+
                 }
                 else {
                     currentInterval = 0;
@@ -399,4 +442,5 @@ public class BringMeToLifeService extends Service {
             }
         }, 0L, 5L*1000); // before first launch: 0 sec, launch every 5 sec
     }
+
 }

@@ -1,6 +1,7 @@
-package smartagencysoftware.bringmetolife;
+package com.smartagencysoftware.bringmetolife;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
@@ -11,12 +12,13 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.com.smartagencysoftware.bringmetolife.R;
 import com.parse.Parse;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseCrashReporting;
 import com.parse.ParseUser;
 
-import smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
+import com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
 
 
 public class BringMeToLifeMainActivity extends ActionBarActivity {
@@ -38,6 +40,9 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         ParseCrashReporting.enable(this);
         Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
         ParseUser.enableAutomaticUser();
+        if (!isMyServiceRunning(BringMeToLifeService.class)){ // This check is on the off-chance
+            startService( new Intent(this, BringMeToLifeService.class));
+        }
         if(ParseUser.getCurrentUser() == null){ //barely possible with AutomaaticUser enabled
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
@@ -49,7 +54,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        startService( new Intent(this, BringMeToLifeService.class));
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (ParseAnonymousUtils.isLinked(currentUser)){
             fullUsername.setText("Anonymous");
@@ -75,8 +79,12 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_settings:
+                break;
+            case R.id.action_checkFriends:
+                sendToService("checkFriends");
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -89,10 +97,26 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             @Override
             public void run() {
                 Toast toast = Toast.makeText(context,
-                        "foreground app is "+string, Toast.LENGTH_SHORT);
+                        string, Toast.LENGTH_SHORT);
                 toast.show();
             }
         });
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void sendToService(String command){
+        Intent intent = new Intent("com.smartagencysoftware.bringmetolife.service.BringMeToLifeService");
+        intent.putExtra("Command", command);
+        startService(intent);
     }
 
 

@@ -1,4 +1,4 @@
-package smartagencysoftware.bringmetolife;
+package com.smartagencysoftware.bringmetolife;
 
 /**
  * Created by Alexey on 17.03.2015.
@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.com.smartagencysoftware.bringmetolife.R;
 import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.parse.SignUpCallback;
