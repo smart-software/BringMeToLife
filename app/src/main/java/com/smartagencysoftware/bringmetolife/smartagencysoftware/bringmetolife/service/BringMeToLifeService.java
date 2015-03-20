@@ -24,6 +24,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.parse.FunctionCallback;
+import com.parse.ParseAnonymousUtils;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
@@ -65,11 +66,6 @@ public class BringMeToLifeService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        // Enable Local Datastore.
-        //Parse.enableLocalDatastore(this);
-        //Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
-
         //Check if Google play Services is avaliable
         int resultCode =   GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
 
@@ -86,21 +82,30 @@ public class BringMeToLifeService extends Service {
                 break;
         }
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(new ConnectionCallbacks())
-                            .addOnConnectionFailedListener(new ConnectionFailedListener()).addApi(LocationServices.API)
-                            .build();
+        mGoogleApiClient = createGoogleApiClient();
+        mGoogleApiClient.connect();
+
+        Log.d("mGogleApiclient Build", "mGoogleApiClient is "+mGoogleApiClient.isConnected());
+
+    }
+
+    synchronized GoogleApiClient createGoogleApiClient(){
+        return new GoogleApiClient.Builder(this).addConnectionCallbacks(new ConnectionCallbacks()).addOnConnectionFailedListener(new ConnectionFailedListener()).addApi(LocationServices.API).build();
+
     }
 
     private class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
 
         @Override
         public void onConnected(Bundle bundle) {
+            oldLastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            Log.d("onConnected", "fired");
             startLocationUpdates();
         }
 
         @Override
         public void onConnectionSuspended(int i) {
-
+            Log.d("onConnected", "suspend");
         }
     }
 
@@ -111,8 +116,8 @@ public class BringMeToLifeService extends Service {
 
     private LocationRequest createLocationRequest() {
         LocationRequest mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000*60*7);
-        mLocationRequest.setFastestInterval(1000*60*3);
+        mLocationRequest.setInterval(1000*60*7); // release:1000*60*7 debug: 10*1000
+        //mLocationRequest.setFastestInterval(1000*60*3);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         return mLocationRequest;
     }
@@ -126,7 +131,8 @@ public class BringMeToLifeService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-            //something can happen here, if necessary TODO
+            Log.d("LocationChangeListener","fired!");
+            checkLife();
         }
     }
 
@@ -134,34 +140,24 @@ public class BringMeToLifeService extends Service {
 
         @Override
         public void onConnectionFailed(ConnectionResult connectionResult) {
-
+            Log.d("onConnectionFailed","fired!" + connectionResult);
         }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("StartService", "intent is "+intent);
-        if (intent.getAction()!=null && intent.getAction().equals("com.smartagencysoftware.bringmetolife.service.BringMeToLifeService")) {
-            String value = intent.getStringExtra("Command");
-            switch (value){
-                case "checkFriends":
-                    launchParseCheckNearFriends();
-                    break;
-            }
-            return START_NOT_STICKY;
-        }
-
-
-        Timer myTimer = new Timer();
+        /*Timer myTimer = new Timer();
         myTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 CheckLifeTask checkLife = new CheckLifeTask();
                 checkLife.execute();
-            }}, 1000L, 60L * 1000*10); // before first launch: 1 sec, launch every 10 minutes
+            }}, 1000L, 60L * 1000*10); // before first launch: 1 sec, launch every 10 minutes*/
         IntentFilter screenStateFilter = new IntentFilter();
         screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        screenStateFilter.addAction("com.smartagencysoftware.bringmetolife.service.receiver.checkfriends");
         mScreenReceiver = new ScreenReceiver();
         registerReceiver(mScreenReceiver, screenStateFilter);
         screenIsOn = true;
@@ -230,10 +226,10 @@ public class BringMeToLifeService extends Service {
     private boolean checkLife(){
         // wonder if mGoogleApiClient is ready by now...  TODO
         lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        BringMeToLifeMainActivity.postInHandler("last know location is "+lastKnownLocation);
         if (oldLastKnownLocation!=null){
             float distance = lastKnownLocation.distanceTo(oldLastKnownLocation);
             //DEBUG
-            distance = 6;
             if (distance > 5) launchParseCheckNearFriends();
         }
         oldLastKnownLocation = lastKnownLocation;
@@ -241,6 +237,7 @@ public class BringMeToLifeService extends Service {
     }
 
     private void launchParseCheckNearFriends() {
+        lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient); //for compatibility with direct call. TODO redo
         //five meters
         double latitude = lastKnownLocation.getLatitude();
         double longitude = lastKnownLocation.getLongitude();
@@ -402,6 +399,11 @@ public class BringMeToLifeService extends Service {
                 case ACTION_SCREEN_OFF:
                     screenIsOn = false;
                     timerSocial.cancel();
+                    break;
+                case "com.smartagencysoftware.bringmetolife.service.receiver.checkfriends":
+                    Log.d("ScreenReceive", "received call !!! mGoogleApi is connecred: "+mGoogleApiClient.isConnected());
+
+                    checkLife();
                     break;
                 default:
                     break;

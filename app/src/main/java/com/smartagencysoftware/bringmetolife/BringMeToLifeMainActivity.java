@@ -57,6 +57,9 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (ParseAnonymousUtils.isLinked(currentUser)){
             fullUsername.setText("Anonymous");
+            if(currentUser.getObjectId()==null){
+                currentUser.saveInBackground(); //TODO savecallback with progress bar and message.
+            }
         }
         else {
             fullUsername.setText(currentUser.getUsername());
@@ -114,9 +117,9 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     }
 
     private void sendToService(String command){
-        Intent intent = new Intent("com.smartagencysoftware.bringmetolife.service.BringMeToLifeService");
-        intent.putExtra("Command", command);
-        startService(intent);
+        Intent intent = new Intent();
+        intent.setAction("com.smartagencysoftware.bringmetolife.service.receiver.checkfriends");
+        sendBroadcast(intent);
     }
 
 
