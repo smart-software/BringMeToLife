@@ -11,7 +11,6 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.com.smartagencysoftware.bringmetolife.R;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseFacebookUtils;
