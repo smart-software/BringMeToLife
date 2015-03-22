@@ -28,11 +28,13 @@ import com.parse.ParseAnonymousUtils;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
+import com.parse.ParseObject;
 import com.parse.ParseUser;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -42,7 +44,6 @@ import static android.content.Intent.ACTION_SCREEN_OFF;
 import static android.content.Intent.ACTION_SCREEN_ON;
 
 public class BringMeToLifeService extends Service {
-    private static Handler uiHandler = new Handler();
     private Location lastKnownLocation = null;
     private Location oldLastKnownLocation = null;
     private ActivityManager mActivityManager = null;
@@ -147,17 +148,11 @@ public class BringMeToLifeService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("StartService", "intent is "+intent);
-        /*Timer myTimer = new Timer();
-        myTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                CheckLifeTask checkLife = new CheckLifeTask();
-                checkLife.execute();
-            }}, 1000L, 60L * 1000*10); // before first launch: 1 sec, launch every 10 minutes*/
         IntentFilter screenStateFilter = new IntentFilter();
         screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
         screenStateFilter.addAction("com.smartagencysoftware.bringmetolife.service.receiver.checkfriends");
+        screenStateFilter.addAction("com.smartagencysoftware.bringmetolife.service.receiver.checkfriends.main");
         mScreenReceiver = new ScreenReceiver();
         registerReceiver(mScreenReceiver, screenStateFilter);
         screenIsOn = true;
@@ -230,14 +225,18 @@ public class BringMeToLifeService extends Service {
         if (oldLastKnownLocation!=null){
             float distance = lastKnownLocation.distanceTo(oldLastKnownLocation);
             //DEBUG
-            if (distance > 5) launchParseCheckNearFriends();
+            if (distance > 5) launchParseCheckNearFriends(null);
         }
         oldLastKnownLocation = lastKnownLocation;
         return true; //true == checkLife started
     }
 
-    private void launchParseCheckNearFriends() {
+    private void launchParseCheckNearFriends(final ServiceCallback callback) {
+
         lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient); //for compatibility with direct call. TODO redo
+        if(lastKnownLocation==null){
+            return;
+        }
         //five meters
         double latitude = lastKnownLocation.getLatitude();
         double longitude = lastKnownLocation.getLongitude();
@@ -258,7 +257,6 @@ public class BringMeToLifeService extends Service {
                 if (e == null) {
                     for (ParseUser friend : result) {
                         Log.d("checkNearFriends", "success: " + friend);
-
                     }
                     BringMeToLifeMainActivity.postInHandler("You have " + result.size() + " friends near: " + result);
                     counterFB = 0;
@@ -269,7 +267,9 @@ public class BringMeToLifeService extends Service {
                     counterOK = 0;
                     counterNone = 0;
                     counterOverall = 0;
-
+                    if (callback!=null){
+                        callback.onExecute(result);
+                    }
                 }
             }
         });
@@ -405,6 +405,9 @@ public class BringMeToLifeService extends Service {
 
                     checkLife();
                     break;
+                case "com.smartagencysoftware.bringmetolife.service.receiver.checkfriends.main":
+                    launchParseCheckNearFriends(new CheckFriendsCallback());
+                    break;
                 default:
                     break;
             }
@@ -445,4 +448,14 @@ public class BringMeToLifeService extends Service {
         }, 0L, 5L*1000); // before first launch: 0 sec, launch every 5 sec
     }
 
+    private interface ServiceCallback{
+        public void onExecute(Object object);
+    }
+
+    private class CheckFriendsCallback implements ServiceCallback{
+        @Override
+        public void onExecute(Object friends) {
+            BringMeToLifeMainActivity.postFriends((List<ParseUser>) friends);
+        }
+    }
 }

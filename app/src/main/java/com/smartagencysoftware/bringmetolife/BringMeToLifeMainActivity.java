@@ -12,11 +12,19 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.Parse;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseCrashReporting;
+import com.parse.ParseGeoPoint;
 import com.parse.ParseUser;
 import com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
+
+import java.util.List;
 
 
 public class BringMeToLifeMainActivity extends ActionBarActivity {
@@ -26,6 +34,8 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     static  Handler uiHandler = new Handler();
     private TextView fullUsername;
     private TextView socialRank;
+    private MapFragment mGoogleMapFragment;
+    private static GoogleMap mGoogleMap;
 
 
     @Override
@@ -47,6 +57,8 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         }
         fullUsername = (TextView)findViewById(R.id.fullusername);
         socialRank = (TextView)findViewById(R.id.socialrank);
+        mGoogleMapFragment = (MapFragment)getFragmentManager().findFragmentById(R.id.map);
+        mGoogleMap = mGoogleMapFragment.getMap();
     }
 
     @Override
@@ -104,6 +116,28 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         });
     }
 
+    public static void postFriends(final List<ParseUser> friends){
+        uiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (friends.size()==0){
+                    return;
+                }
+                ParseGeoPoint tempGeopoint =null;
+                mGoogleMap.setMyLocationEnabled(true);
+                for(ParseUser friend:friends){
+                    tempGeopoint = friend.getParseGeoPoint("location");
+                    mGoogleMap.addMarker(new MarkerOptions()
+                    .title(friend.getUsername())
+                    .position(new LatLng(tempGeopoint.getLatitude(),tempGeopoint.getLongitude())));
+                }
+                //move camera to last friend in list. Must center the user position instead TODO
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(tempGeopoint.getLatitude(),tempGeopoint.getLongitude())));
+            }
+        });
+
+    }
+
     private boolean isMyServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
@@ -116,7 +150,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
     private void sendToService(String command){
         Intent intent = new Intent();
-        intent.setAction("com.smartagencysoftware.bringmetolife.service.receiver.checkfriends");
+        intent.setAction("com.smartagencysoftware.bringmetolife.service.receiver.checkfriends.main");
         sendBroadcast(intent);
     }
 
