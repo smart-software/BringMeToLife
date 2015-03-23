@@ -27,7 +27,7 @@
         </activity>
         <activity android:name="com.smartagencysoftware.bringmetolife.LoginActivity" android:label="Login" android:theme="@style/MipeTheme.FloatingActivity" />
         <activity android:name="com.smartagencysoftware.bringmetolife.SignUpActivity" android:label="Sign Up" android:theme="@style/MipeTheme.FloatingActivity"/>
-
+        <activity android:name=".ChooseLogin" android:label="Choose login method" android:theme="@style/MipeTheme.FloatingActivity" />
 
         <service
             android:name="com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService"

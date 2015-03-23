@@ -47,12 +47,11 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         Parse.enableLocalDatastore(this);
         ParseCrashReporting.enable(this);
         Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
-        ParseUser.enableAutomaticUser();
         if (!isMyServiceRunning(BringMeToLifeService.class)){ // This check is on the off-chance
             startService( new Intent(this, BringMeToLifeService.class));
         }
-        if(ParseUser.getCurrentUser() == null){ //barely possible with AutomaaticUser enabled
-            Intent intent = new Intent(this, LoginActivity.class);
+        if(ParseUser.getCurrentUser() == null){ //barely possible with AutomaticUser enabled
+            Intent intent = new Intent(this, ChooseLogin.class);
             startActivity(intent);
         }
         fullUsername = (TextView)findViewById(R.id.fullusername);
@@ -64,7 +63,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        ParseUser currentUser = ParseUser.getCurrentUser();
+       /* ParseUser currentUser = ParseUser.getCurrentUser();
         if (ParseAnonymousUtils.isLinked(currentUser)){
             fullUsername.setText("Anonymous");
             if(currentUser.getObjectId()==null){
@@ -74,13 +73,19 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         else {
             fullUsername.setText(currentUser.getUsername());
             socialRank.setText(currentUser.getString("socialRank"));
-        }
+        }*/
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_bring_me_to_life_main, menu);
+        if(ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())){
+            getMenuInflater().inflate(R.menu.menu_bring_me_to_life_main_anonymous, menu);
+        }
+        else{
+            getMenuInflater().inflate(R.menu.menu_bring_me_to_life_main, menu);
+        }
+
         return true;
     }
 
@@ -97,6 +102,10 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
                 break;
             case R.id.action_checkFriends:
                 sendToService("checkFriends");
+                break;
+            case R.id.action_signup:
+                Intent intent = new Intent(this, LoginActivity.class);
+                startActivity(intent);
                 break;
         }
 
@@ -133,6 +142,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
                 }
                 //move camera to last friend in list. Must center the user position instead TODO
                 mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(tempGeopoint.getLatitude(),tempGeopoint.getLongitude())));
+                mGoogleMap.moveCamera(CameraUpdateFactory.zoomBy(20));
             }
         });
 
