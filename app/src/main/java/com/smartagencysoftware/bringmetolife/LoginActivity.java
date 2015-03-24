@@ -11,6 +11,7 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.facebook.AppEventsLogger;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseFacebookUtils;
@@ -118,7 +119,7 @@ public class LoginActivity extends Activity {
     protected void onResume() {
         super.onResume();
         // Logs 'install' and 'app activate' App Events. Facebook
-        //AppEventsLogger.activateApp(this);
+        AppEventsLogger.activateApp(this);
     }
 
     private void gotoMainActivity() {
@@ -149,6 +150,6 @@ public class LoginActivity extends Activity {
     protected void onPause() {
         super.onPause();
         // Logs 'app deactivate' App Event. Facebook
-        //AppEventsLogger.deactivateApp(this);
+        AppEventsLogger.deactivateApp(this);
     }
 }

@@ -23,9 +23,7 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.GetCallback;
-import com.parse.Parse;
 import com.parse.ParseAnonymousUtils;
-import com.parse.ParseCrashReporting;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseGeoPoint;
@@ -65,9 +63,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_bring_me_to_life_main);
         mainActivity = this;
         context = getApplicationContext();
-        Parse.enableLocalDatastore(this);
-        ParseCrashReporting.enable(this);
-        Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
         if (!isMyServiceRunning(BringMeToLifeService.class)){ // This check is on the off-chance
             startService( new Intent(this, BringMeToLifeService.class));
         }
@@ -75,6 +70,14 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             Intent intent = new Intent(this, Choose.class);
             startActivity(intent);
         }
+
+
+
+
+
+
+
+
         fullUsername = (TextView)findViewById(R.id.fullusername);
         socialRank = (TextView)findViewById(R.id.socialrank);
         mAvatar = (CircleImageView)findViewById(R.id.avatar);
@@ -93,6 +96,8 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             }
         });
     }
+
+
 
     @Override
     protected void onStart() {

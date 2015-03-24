@@ -32,8 +32,9 @@ public class Choose extends ActionBarActivity {
                     @Override
                     public void done(ParseUser parseUser, ParseException e) {
                         if (e == null) {
-                            Intent intent = new Intent(getApplicationContext(), BringMeToLifeMainActivity.class);
-                            startActivity(intent);
+                            /*Intent intent = new Intent(getApplicationContext(), BringMeToLifeMainActivity.class);
+                            startActivity(intent);*/
+                            finish();
                         } else {
                             Log.d("ChooseLogin", "Failed login Anonymously."+e);
                         }
