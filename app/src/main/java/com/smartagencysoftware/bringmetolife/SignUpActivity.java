@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.parse.SignUpCallback;
@@ -57,8 +58,14 @@ public class SignUpActivity extends Activity{
                 else {
                     // create the new user!
                     //setProgressBarIndeterminateVisibility(true);
+                    ParseUser newUser;
+                    if (ParseUser.getCurrentUser()!=null){
+                        newUser = ParseUser.getCurrentUser();
+                    }
+                    else {
+                        newUser = new ParseUser();
+                    }
 
-                    ParseUser newUser = new ParseUser();
                     newUser.setUsername(username);
                     newUser.setPassword(password);
                     newUser.setEmail(email);

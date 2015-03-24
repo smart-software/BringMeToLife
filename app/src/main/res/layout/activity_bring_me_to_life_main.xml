@@ -8,11 +8,13 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/avatarDrawer"
+        android:id="@+id/avatar"
         android:layout_width="96dp"
         android:layout_height="96dp"
         app:border_width="1dp"
-        app:border_color="@color/MipeTheme.additional.facebook.blue"/>
+
+        app:border_color="@color/MipeTheme.additional.facebook.blue"
+        android:background="@mipmap/deer" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -20,11 +22,8 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Full Username "
         android:id="@+id/fullusername"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="5dp"
-        android:layout_toRightOf="@+id/avatarDrawer" />
+        android:layout_alignTop="@+id/avatar"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -40,9 +39,9 @@
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:name="com.google.android.gms.maps.MapFragment"
-        android:layout_below="@+id/avatarDrawer"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_below="@+id/avatar"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 
 </RelativeLayout>

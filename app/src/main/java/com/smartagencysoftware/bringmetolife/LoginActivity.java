@@ -31,9 +31,6 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setProgressBarIndeterminateVisibility(true);
-        if(ParseUser.getCurrentUser() !=null){
-            gotoMainActivity();
-        }
         setContentView(R.layout.activity_login);
 
 
