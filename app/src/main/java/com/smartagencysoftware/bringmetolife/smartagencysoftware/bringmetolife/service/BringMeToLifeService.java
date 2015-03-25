@@ -221,12 +221,8 @@ public class BringMeToLifeService extends Service {
     private boolean checkLife(){
         // wonder if mGoogleApiClient is ready by now...  TODO
         lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        BringMeToLifeMainActivity.postInHandler("last know location is "+lastKnownLocation);
-        if (oldLastKnownLocation!=null){
-            float distance = lastKnownLocation.distanceTo(oldLastKnownLocation);
-            //DEBUG
-            if (distance > 5) launchParseCheckNearFriends(null);
-        }
+        //BringMeToLifeMainActivity.postInHandler("last know location is "+lastKnownLocation); //This probably causes crash when activity is already destroyed
+        launchParseCheckNearFriends(null);
         oldLastKnownLocation = lastKnownLocation;
         return true; //true == checkLife started
     }

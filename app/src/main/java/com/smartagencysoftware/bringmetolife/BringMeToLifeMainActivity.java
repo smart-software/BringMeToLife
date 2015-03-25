@@ -56,7 +56,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private Location lastKnownLocation;
     private CircleImageView mAvatar;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,13 +69,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             Intent intent = new Intent(this, Choose.class);
             startActivity(intent);
         }
-
-
-
-
-
-
-
 
         fullUsername = (TextView)findViewById(R.id.fullusername);
         socialRank = (TextView)findViewById(R.id.socialrank);
