@@ -11,7 +11,9 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -55,6 +57,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private LocationManager mLocationManager;
     private Location lastKnownLocation;
     private CircleImageView mAvatar;
+    private Menu mMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +97,14 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         lastKnownLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         if(lastKnownLocation!=null) {
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())));
@@ -110,38 +121,45 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             else {
                 fullUsername.setText(currentUser.getUsername());
                 socialRank.setText(currentUser.getString("socialRank"));
-                    ParseUser.getCurrentUser().fetchIfNeededInBackground(new GetCallback<ParseObject>() {
-                        @Override
-                        public void done(ParseObject parseObject, ParseException e) {
-                            try {
-                                String avatarUrl = currentUser.getParseFile("avatar").getUrl();
-                                Picasso.with(getApplicationContext()).load(avatarUrl).into(mAvatar);
-                            } catch (Exception e1) {
-                                e1.printStackTrace();
-                            }
+                ParseUser.getCurrentUser().fetchIfNeededInBackground(new GetCallback<ParseObject>() {
+                    @Override
+                    public void done(ParseObject parseObject, ParseException e) {
+                        try {
+                            String avatarUrl = currentUser.getParseFile("avatar").getUrl();
+                            Picasso.with(getApplicationContext()).load(avatarUrl).into(mAvatar);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
                         }
-                    });
+                    }
+                });
 
             }
         }
-
+        menuInflate(mMenu); //must be in onNavigateUpFromChild, but this method dont fires. TODO
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        if(currentUser!=null && ParseAnonymousUtils.isLinked(currentUser)){
-            getMenuInflater().inflate(R.menu.menu_bring_me_to_life_main_anonymous, menu);
-        }
-        else if(currentUser!=null){
-            getMenuInflater().inflate(R.menu.menu_bring_me_to_life_main, menu);
-        }
-
+        mMenu = menu;
+        menuInflate(menu);
         return true;
     }
 
+
+    private void menuInflate(Menu menu) {
+        if(mMenu==null){return;};
+        mMenu.clear();
+        MenuInflater menuInflater = getMenuInflater();
+
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if(currentUser!=null && ParseAnonymousUtils.isLinked(currentUser)){
+            menuInflater.inflate(R.menu.menu_bring_me_to_life_main_anonymous, menu);
+        }
+        else if(currentUser!=null){
+            menuInflater.inflate(R.menu.menu_bring_me_to_life_main, menu);
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will

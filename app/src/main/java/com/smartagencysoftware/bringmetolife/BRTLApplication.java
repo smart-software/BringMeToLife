@@ -24,7 +24,8 @@ public class BRTLApplication extends Application{
         Parse.enableLocalDatastore(this);
         ParseCrashReporting.enable(this);
         Parse.initialize(this, "F13jhzTNsPglWJ3rSXIFjPlKhcvPVuUmzqhkdsxd", "vHGFSAN2uaoKpPPFsn19Jm3WjaBW7iBFD7asCnqv");
-        ParseFacebookUtils.initialize("749333328498471");
+        ParseFacebookUtils.initialize(String.valueOf(R.string.app_id));
+
         //debug only for hashset of developer enviroment
         obtainDevKeyEnvoroment();
     }

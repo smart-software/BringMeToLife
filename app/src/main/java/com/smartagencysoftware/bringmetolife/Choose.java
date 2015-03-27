@@ -1,5 +1,6 @@
 package com.smartagencysoftware.bringmetolife;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -28,6 +29,9 @@ public class Choose extends ActionBarActivity {
         loginAn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (ParseUser.getCurrentUser()!=null){
+                    ParseUser.logOut();
+                }
                 ParseAnonymousUtils.logIn(new LogInCallback() {
                     @Override
                     public void done(ParseUser parseUser, ParseException e) {
@@ -58,6 +62,7 @@ public class Choose extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.menu_choose, menu);
         return true;
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

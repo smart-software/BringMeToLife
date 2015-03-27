@@ -119,7 +119,9 @@ public class LoginActivity extends Activity {
     protected void onResume() {
         super.onResume();
         // Logs 'install' and 'app activate' App Events. Facebook
-        AppEventsLogger.activateApp(this);
+        Log.d("LoginAct","getAppcliation context is "+getApplicationContext()+". this: "+this);
+        AppEventsLogger.activateApp(getApplicationContext());
+
     }
 
     private void gotoMainActivity() {
