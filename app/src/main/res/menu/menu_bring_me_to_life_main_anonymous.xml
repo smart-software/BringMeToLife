@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools" tools:context=".BringMeToLifeMainActivity">
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_checkFriends" android:title="Check Friends"
+        android:orderInCategory="90" app:showAsAction="never"/>
     <item android:id="@+id/action_signup" android:title="Sign Up/Login"
-        android:orderInCategory="90" app:showAsAction="always"/>
+        android:orderInCategory="90" app:showAsAction="never"/>
 </menu>

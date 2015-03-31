@@ -6,12 +6,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Shader;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -19,6 +23,13 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidplot.Plot;
+import com.androidplot.xy.LineAndPointFormatter;
+import com.androidplot.xy.PointLabelFormatter;
+import com.androidplot.xy.SimpleXYSeries;
+import com.androidplot.xy.XYPlot;
+import com.androidplot.xy.XYSeries;
+import com.androidplot.xy.XYStepMode;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -39,6 +50,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.text.Format;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -58,6 +76,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private Location lastKnownLocation;
     private CircleImageView mAvatar;
     private Menu mMenu;
+    private XYPlot statsPlot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +109,17 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
                 startActivityForResult(photoPickerIntent, REQUEST_IMAGE_CHOOSE);
             }
         });
+
+        setUpStatsGraph();
+        Number[] numSightings = {5, 8, 9, 2, 5};
+        Number[] years = {
+                978307200,  // 2001
+                1009843200, // 2002
+                1041379200, // 2003
+                1072915200, // 2004
+                1104537600  // 2005
+        };
+        setPlotData(years,numSightings);
     }
 
 
@@ -268,5 +298,84 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         sendBroadcast(intent);
     }
 
+
+    private void setPlotData(Number[] years, Number[] numSightings){
+
+        // create our series from our array of nums:
+        XYSeries series2 = new SimpleXYSeries(
+                Arrays.asList(years),
+                Arrays.asList(numSightings),
+                "Social stats");
+
+        // Create a formatter to use for drawing a series using LineAndPointRenderer:
+        LineAndPointFormatter series2Format = new LineAndPointFormatter(Color.rgb(0,100,0),Color.rgb(0, 100, 0),                   // point color
+                Color.rgb(100, 200, 0), new PointLabelFormatter());
+        LineAndPointFormatter formatter  = new LineAndPointFormatter(Color.rgb(0, 0,0), Color.BLUE, Color.RED, new PointLabelFormatter());
+
+        // draw a domain tick for each year:
+        statsPlot.setDomainStep(XYStepMode.SUBDIVIDE, years.length);
+        // setup our line fill paint to be a slightly transparent gradient:
+        Paint lineFill = new Paint();
+        lineFill.setAlpha(200);
+        lineFill.setShader(new LinearGradient(0, 0, 0, 250, Color.WHITE, Color.GREEN, Shader.TileMode.MIRROR));
+
+        formatter.setFillPaint(lineFill);
+
+        statsPlot.addSeries(series2, formatter);
+    }
+
+    private void setUpStatsGraph(){
+        statsPlot = (XYPlot) findViewById(R.id.statsPlot);
+
+        statsPlot.getGraphWidget().getGridBackgroundPaint().setColor(Color.WHITE);
+        statsPlot.getGraphWidget().getDomainGridLinePaint().setColor(Color.BLACK);
+        statsPlot.getGraphWidget().getDomainGridLinePaint().setPathEffect(new DashPathEffect(new float[]{1, 1}, 1));
+        statsPlot.getGraphWidget().getDomainOriginLinePaint().setColor(Color.BLACK);
+        statsPlot.getGraphWidget().getRangeOriginLinePaint().setColor(Color.BLACK);
+
+        statsPlot.setBorderStyle(Plot.BorderStyle.SQUARE, null, null);
+        statsPlot.getBorderPaint().setStrokeWidth(1);
+        statsPlot.getBorderPaint().setAntiAlias(false);
+        statsPlot.getBorderPaint().setColor(Color.WHITE);
+
+
+
+        statsPlot.getGraphWidget().setPaddingRight(2);
+
+        // customize our domain/range labels
+        statsPlot.setDomainLabel("Date");
+        statsPlot.setRangeLabel("Time spent");
+
+        // get rid of decimal points in our range labels:
+        statsPlot.setRangeValueFormat(new DecimalFormat("0"));
+
+        statsPlot.setDomainValueFormat(new Format() {
+
+            // create a simple date format that draws on the year portion of our timestamp.
+            // see http://download.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html
+            // for a full description of SimpleDateFormat.
+            private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM d, ''yy");
+
+            @Override
+            public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
+
+                // because our timestamps are in seconds and SimpleDateFormat expects milliseconds
+                // we multiply our timestamp by 1000:
+                long timestamp = ((Number) obj).longValue() * 1000;
+                Date date = new Date(timestamp);
+                return dateFormat.format(date, toAppendTo, pos);
+            }
+
+            @Override
+            public Object parseObject(String source, ParsePosition pos) {
+                return null;
+
+            }
+        });
+
+        /*// by default, AndroidPlot displays developer guides to aid in laying out your plot.
+        // To get rid of them call disableAllMarkup():
+        statsPlot.disableAllMarkup();*/
+    }
 
 }

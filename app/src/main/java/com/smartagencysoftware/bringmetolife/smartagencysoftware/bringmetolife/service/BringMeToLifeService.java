@@ -238,6 +238,7 @@ public class BringMeToLifeService extends Service {
         double longitude = lastKnownLocation.getLongitude();
         ParseGeoPoint point = new ParseGeoPoint(latitude, longitude);
         HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("id", ParseUser.getCurrentUser().getObjectId()); // TODO redo
         params.put("geopoint", point);
         params.put("facebook", counterFB);
         params.put("instagram", counterIN);

@@ -34,14 +34,26 @@
         android:layout_below="@+id/fullusername"
         android:layout_alignLeft="@+id/fullusername"
         android:layout_alignStart="@+id/fullusername" />
+    <com.androidplot.xy.XYPlot
+        android:id="@+id/statsPlot"
+        android:layout_width="fill_parent"
+        android:layout_height="200dp"
+        title="Yearly UFO Sightings"
+        android:layout_below="@+id/avatar"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        style="@style/MipeTheme.StatsPlot"
+        android:layout_marginTop="26dp" />
     <fragment
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:name="com.google.android.gms.maps.MapFragment"
-        android:layout_below="@+id/avatar"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_marginTop="25dp"
+        android:layout_below="@+id/statsPlot"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
 
 
 </RelativeLayout>
