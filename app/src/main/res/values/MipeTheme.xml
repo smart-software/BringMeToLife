@@ -17,7 +17,7 @@
     </style>
 
     <style name="MipeTheme.StatsPlot" parent="MipeTheme.MainActivity">
- 
+
         androidPlot.graphWidget.rangeLabelPaint.textSize="13dp"
     </style>
     <style name="MipeTheme.ActionBar.TitleText" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">

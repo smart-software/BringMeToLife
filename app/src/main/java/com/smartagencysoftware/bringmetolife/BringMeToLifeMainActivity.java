@@ -10,20 +10,25 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.Shader;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
+import android.util.FloatMath;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.androidplot.Plot;
+import com.androidplot.util.PixelUtils;
+import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
 import com.androidplot.xy.PointLabelFormatter;
 import com.androidplot.xy.SimpleXYSeries;
@@ -35,16 +40,21 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
 import com.squareup.picasso.Picasso;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -55,9 +65,13 @@ import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -77,6 +91,8 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private CircleImageView mAvatar;
     private Menu mMenu;
     private XYPlot statsPlot;
+    private PointF minXY;
+    private PointF maxXY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,15 +127,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         });
 
         setUpStatsGraph();
-        Number[] numSightings = {5, 8, 9, 2, 5};
-        Number[] years = {
-                978307200,  // 2001
-                1009843200, // 2002
-                1041379200, // 2003
-                1072915200, // 2004
-                1104537600  // 2005
-        };
-        setPlotData(years,numSightings);
     }
 
 
@@ -165,6 +172,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
             }
         }
+        getStats(new StatsCallback());
         menuInflate(mMenu); //must be in onNavigateUpFromChild, but this method dont fires. TODO
     }
 
@@ -299,12 +307,13 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     }
 
 
-    private void setPlotData(Number[] years, Number[] numSightings){
+    private void setPlotData(ArrayList<Long> years, ArrayList<Integer> numSightings){
+
 
         // create our series from our array of nums:
         XYSeries series2 = new SimpleXYSeries(
-                Arrays.asList(years),
-                Arrays.asList(numSightings),
+                (List)years,
+                (List)numSightings,
                 "Social stats");
 
         // Create a formatter to use for drawing a series using LineAndPointRenderer:
@@ -313,7 +322,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         LineAndPointFormatter formatter  = new LineAndPointFormatter(Color.rgb(0, 0,0), Color.BLUE, Color.RED, new PointLabelFormatter());
 
         // draw a domain tick for each year:
-        statsPlot.setDomainStep(XYStepMode.SUBDIVIDE, years.length);
+        statsPlot.setDomainStep(XYStepMode.SUBDIVIDE, years.size());
         // setup our line fill paint to be a slightly transparent gradient:
         Paint lineFill = new Paint();
         lineFill.setAlpha(200);
@@ -322,21 +331,36 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         formatter.setFillPaint(lineFill);
 
         statsPlot.addSeries(series2, formatter);
+        //Set of internal variables for keeping track of the boundaries
+        statsPlot.calculateMinMaxVals();
+        minXY=new PointF(statsPlot.getCalculatedMinX().floatValue(),statsPlot.getCalculatedMinY().floatValue());
+        maxXY=new PointF(statsPlot.getCalculatedMaxX().floatValue(),statsPlot.getCalculatedMaxY().floatValue());
+        statsPlot.redraw();
     }
 
     private void setUpStatsGraph(){
         statsPlot = (XYPlot) findViewById(R.id.statsPlot);
 
+
+
         statsPlot.getGraphWidget().getGridBackgroundPaint().setColor(Color.WHITE);
+        statsPlot.getGraphWidget().getBackgroundPaint().setColor(Color.WHITE);
         statsPlot.getGraphWidget().getDomainGridLinePaint().setColor(Color.BLACK);
         statsPlot.getGraphWidget().getDomainGridLinePaint().setPathEffect(new DashPathEffect(new float[]{1, 1}, 1));
         statsPlot.getGraphWidget().getDomainOriginLinePaint().setColor(Color.BLACK);
         statsPlot.getGraphWidget().getRangeOriginLinePaint().setColor(Color.BLACK);
 
+        statsPlot.getGraphWidget().getRangeLabelPaint().setTextSize(PixelUtils.dpToPix(20));
+
         statsPlot.setBorderStyle(Plot.BorderStyle.SQUARE, null, null);
         statsPlot.getBorderPaint().setStrokeWidth(1);
         statsPlot.getBorderPaint().setAntiAlias(false);
         statsPlot.getBorderPaint().setColor(Color.WHITE);
+
+        statsPlot.setBorderStyle(Plot.BorderStyle.NONE, null, null);
+        statsPlot.setPlotMargins(0, 0, 0, 0);
+        statsPlot.setPlotPadding(0, 0, 0, 0);
+        statsPlot.setGridPadding(0, 10, 5, 0);
 
 
 
@@ -359,9 +383,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             @Override
             public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
 
-                // because our timestamps are in seconds and SimpleDateFormat expects milliseconds
-                // we multiply our timestamp by 1000:
-                long timestamp = ((Number) obj).longValue() * 1000;
+                long timestamp = ((Number) obj).longValue();
                 Date date = new Date(timestamp);
                 return dateFormat.format(date, toAppendTo, pos);
             }
@@ -378,4 +400,136 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         statsPlot.disableAllMarkup();*/
     }
 
+    private void getStats(final StatsCallback callback){
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("stats");
+        query.getFirstInBackground(new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject parseObject, ParseException e) {
+                  callback.onExecute(parseObject.getJSONObject("stats"));
+            }
+        });
+    }
+
+    private class StatsCallback{
+        void onExecute(JSONObject stats){
+            setPlotData(stats, "overall");
+        }
+    }
+
+    private void setPlotData(JSONObject stats, String plotType) {
+        Iterator iterator = stats.keys();
+        ArrayList<Long> date = new ArrayList<Long>();
+        ArrayList<Integer> timeSpent = new ArrayList<Integer>();
+        String tmpKey = null;
+        JSONObject tmpJson = null;
+        while(iterator.hasNext()){
+            tmpKey = (String) iterator.next();
+            date.add(Long.valueOf(tmpKey));
+            try {
+                tmpJson = stats.getJSONObject(tmpKey);
+                timeSpent.add((Integer) tmpJson.get(plotType));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        setPlotData(date, timeSpent);
+    }
+
+    private class touchPlot  implements View.OnTouchListener {
+        // Definition of the touch states
+        static final int NONE = 0;
+        static final int ONE_FINGER_DRAG = 1;
+        static final int TWO_FINGERS_DRAG = 2;
+        int mode = NONE;
+
+        PointF firstFinger;
+        float lastScrolling;
+        float distBetweenFingers;
+        float lastZooming;
+
+        @Override
+        public boolean onTouch(View arg0, MotionEvent event) {
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN: // Start gesture
+                firstFinger = new PointF(event.getX(), event.getY());
+                mode = ONE_FINGER_DRAG;
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                //When the gesture ends, a thread is created to give inertia to the scrolling and zoom
+                Timer t = new Timer();
+                t.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        while(Math.abs(lastScrolling)>1f || Math.abs(lastZooming-1)<1.01){
+                            lastScrolling*=.8;
+                            scroll(lastScrolling);
+                            lastZooming+=(1-lastZooming)*.2;
+                            zoom(lastZooming);
+                            statsPlot.setDomainBoundaries(minXY.x, maxXY.x, BoundaryMode.AUTO);
+                            statsPlot.redraw();
+                            // the thread lives until the scrolling and zooming are imperceptible
+                        }
+                    }
+                }, 0);
+
+            case MotionEvent.ACTION_POINTER_DOWN: // second finger
+                distBetweenFingers = spacing(event);
+                // the distance check is done to avoid false alarms
+                if (distBetweenFingers > 5f) {
+                    mode = TWO_FINGERS_DRAG;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mode == ONE_FINGER_DRAG) {
+                    PointF oldFirstFinger=firstFinger;
+                    firstFinger=new PointF(event.getX(), event.getY());
+                    lastScrolling=oldFirstFinger.x-firstFinger.x;
+                    scroll(lastScrolling);
+                    lastZooming=(firstFinger.y-oldFirstFinger.y)/statsPlot.getHeight();
+                    if (lastZooming<0)
+                        lastZooming=1/(1-lastZooming);
+                    else
+                        lastZooming+=1;
+                    zoom(lastZooming);
+                    statsPlot.setDomainBoundaries(minXY.x, maxXY.x, BoundaryMode.AUTO);
+                    statsPlot.redraw();
+
+                } else if (mode == TWO_FINGERS_DRAG) {
+                    float oldDist =distBetweenFingers;
+                    distBetweenFingers=spacing(event);
+                    lastZooming=oldDist/distBetweenFingers;
+                    zoom(lastZooming);
+                    statsPlot.setDomainBoundaries(minXY.x, maxXY.x, BoundaryMode.AUTO);
+                    statsPlot.redraw();
+                }
+                break;
+        }
+        return true;
+    }
+
+        private void zoom(float scale) {
+        float domainSpan = maxXY.x    - minXY.x;
+        float domainMidPoint = maxXY.x        - domainSpan / 2.0f;
+        float offset = domainSpan * scale / 2.0f;
+        minXY.x=domainMidPoint- offset;
+        maxXY.x=domainMidPoint+offset;
+    }
+
+        private void scroll(float pan) {
+        float domainSpan = maxXY.x    - minXY.x;
+        float step = domainSpan / statsPlot.getWidth();
+        float offset = pan * step;
+        minXY.x+= offset;
+        maxXY.x+= offset;
+    }
+
+        private float spacing(MotionEvent event) {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return FloatMath.sqrt(x * x + y * y);
+    }
+
+
+    }
 }
