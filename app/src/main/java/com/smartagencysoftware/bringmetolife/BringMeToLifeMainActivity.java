@@ -27,6 +27,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.androidplot.Plot;
+import com.androidplot.ui.SizeLayoutType;
+import com.androidplot.ui.SizeMetrics;
 import com.androidplot.util.PixelUtils;
 import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
@@ -343,23 +345,34 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
 
 
-        statsPlot.getGraphWidget().getGridBackgroundPaint().setColor(Color.WHITE);
-        statsPlot.getGraphWidget().getBackgroundPaint().setColor(Color.WHITE);
+        statsPlot.getGraphWidget().getGridBackgroundPaint().setColor(Color.TRANSPARENT);
+        statsPlot.getGraphWidget().getBackgroundPaint().setColor(Color.TRANSPARENT);
         statsPlot.getGraphWidget().getDomainGridLinePaint().setColor(Color.BLACK);
         statsPlot.getGraphWidget().getDomainGridLinePaint().setPathEffect(new DashPathEffect(new float[]{1, 1}, 1));
         statsPlot.getGraphWidget().getDomainOriginLinePaint().setColor(Color.BLACK);
         statsPlot.getGraphWidget().getRangeOriginLinePaint().setColor(Color.BLACK);
 
-        statsPlot.getGraphWidget().getRangeLabelPaint().setTextSize(PixelUtils.dpToPix(20));
-
-        statsPlot.setBorderStyle(Plot.BorderStyle.SQUARE, null, null);
-        statsPlot.getBorderPaint().setStrokeWidth(1);
-        statsPlot.getBorderPaint().setAntiAlias(false);
-        statsPlot.getBorderPaint().setColor(Color.WHITE);
-
-        statsPlot.setBorderStyle(Plot.BorderStyle.NONE, null, null);
+        statsPlot.getGraphWidget().setGridPadding(50, 50, 50, 50);
         statsPlot.setPlotMargins(0, 0, 0, 0);
         statsPlot.setPlotPadding(0, 0, 0, 0);
+        statsPlot.setGridPadding(0, 10, 5, 0);
+        statsPlot.setBorderStyle(Plot.BorderStyle.NONE, null, null);
+        statsPlot.getGraphWidget().getRangeLabelPaint().setTextSize(PixelUtils.dpToPix(12));
+        statsPlot.getGraphWidget().getDomainLabelPaint().setTextSize(PixelUtils.dpToPix(9));
+
+        statsPlot.getGraphWidget().getDomainLabelPaint().setColor(Color.BLACK);
+        statsPlot.getGraphWidget().getRangeLabelPaint().setColor(Color.BLACK);
+
+        statsPlot.getDomainLabelWidget().getLabelPaint().setColor(Color.BLACK);
+        statsPlot.getRangeLabelWidget().getLabelPaint().setColor(Color.BLACK);
+        statsPlot.getRangeLabelWidget().getLabelPaint().setTextSize(PixelUtils.dpToPix(12));
+
+        statsPlot.getDomainLabelWidget().getLabelPaint().setTextAlign(Paint.Align.LEFT);
+        statsPlot.getBorderPaint().setStrokeWidth(1);
+        statsPlot.getBorderPaint().setAntiAlias(false);
+        statsPlot.getBorderPaint().setColor(Color.BLACK);
+
+        statsPlot.setBorderStyle(Plot.BorderStyle.NONE, null, null);
         statsPlot.setGridPadding(0, 10, 5, 0);
 
 
@@ -435,101 +448,4 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         setPlotData(date, timeSpent);
     }
 
-    private class touchPlot  implements View.OnTouchListener {
-        // Definition of the touch states
-        static final int NONE = 0;
-        static final int ONE_FINGER_DRAG = 1;
-        static final int TWO_FINGERS_DRAG = 2;
-        int mode = NONE;
-
-        PointF firstFinger;
-        float lastScrolling;
-        float distBetweenFingers;
-        float lastZooming;
-
-        @Override
-        public boolean onTouch(View arg0, MotionEvent event) {
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_DOWN: // Start gesture
-                firstFinger = new PointF(event.getX(), event.getY());
-                mode = ONE_FINGER_DRAG;
-                break;
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_POINTER_UP:
-                //When the gesture ends, a thread is created to give inertia to the scrolling and zoom
-                Timer t = new Timer();
-                t.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        while(Math.abs(lastScrolling)>1f || Math.abs(lastZooming-1)<1.01){
-                            lastScrolling*=.8;
-                            scroll(lastScrolling);
-                            lastZooming+=(1-lastZooming)*.2;
-                            zoom(lastZooming);
-                            statsPlot.setDomainBoundaries(minXY.x, maxXY.x, BoundaryMode.AUTO);
-                            statsPlot.redraw();
-                            // the thread lives until the scrolling and zooming are imperceptible
-                        }
-                    }
-                }, 0);
-
-            case MotionEvent.ACTION_POINTER_DOWN: // second finger
-                distBetweenFingers = spacing(event);
-                // the distance check is done to avoid false alarms
-                if (distBetweenFingers > 5f) {
-                    mode = TWO_FINGERS_DRAG;
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (mode == ONE_FINGER_DRAG) {
-                    PointF oldFirstFinger=firstFinger;
-                    firstFinger=new PointF(event.getX(), event.getY());
-                    lastScrolling=oldFirstFinger.x-firstFinger.x;
-                    scroll(lastScrolling);
-                    lastZooming=(firstFinger.y-oldFirstFinger.y)/statsPlot.getHeight();
-                    if (lastZooming<0)
-                        lastZooming=1/(1-lastZooming);
-                    else
-                        lastZooming+=1;
-                    zoom(lastZooming);
-                    statsPlot.setDomainBoundaries(minXY.x, maxXY.x, BoundaryMode.AUTO);
-                    statsPlot.redraw();
-
-                } else if (mode == TWO_FINGERS_DRAG) {
-                    float oldDist =distBetweenFingers;
-                    distBetweenFingers=spacing(event);
-                    lastZooming=oldDist/distBetweenFingers;
-                    zoom(lastZooming);
-                    statsPlot.setDomainBoundaries(minXY.x, maxXY.x, BoundaryMode.AUTO);
-                    statsPlot.redraw();
-                }
-                break;
-        }
-        return true;
-    }
-
-        private void zoom(float scale) {
-        float domainSpan = maxXY.x    - minXY.x;
-        float domainMidPoint = maxXY.x        - domainSpan / 2.0f;
-        float offset = domainSpan * scale / 2.0f;
-        minXY.x=domainMidPoint- offset;
-        maxXY.x=domainMidPoint+offset;
-    }
-
-        private void scroll(float pan) {
-        float domainSpan = maxXY.x    - minXY.x;
-        float step = domainSpan / statsPlot.getWidth();
-        float offset = pan * step;
-        minXY.x+= offset;
-        maxXY.x+= offset;
-    }
-
-        private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return FloatMath.sqrt(x * x + y * y);
-    }
-
-
-    }
 }
