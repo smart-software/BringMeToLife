@@ -17,20 +17,15 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
-import android.util.FloatMath;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.androidplot.Plot;
-import com.androidplot.ui.SizeLayoutType;
-import com.androidplot.ui.SizeMetrics;
 import com.androidplot.util.PixelUtils;
-import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
 import com.androidplot.xy.PointLabelFormatter;
 import com.androidplot.xy.SimpleXYSeries;
@@ -42,7 +37,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
@@ -52,6 +46,7 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
+import com.smartagencysoftware.bringmetolife.com.smartagencysoftware.bringmetolife.misc.constants;
 import com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.service.BringMeToLifeService;
 import com.squareup.picasso.Picasso;
 
@@ -68,12 +63,10 @@ import java.text.Format;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -95,6 +88,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private XYPlot statsPlot;
     private PointF minXY;
     private PointF maxXY;
+    private JSONObject mStats;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,13 +137,16 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        final ParseUser currentUser = ParseUser.getCurrentUser();
+        socialRank.setText(currentUser.getString("social rank"));
         lastKnownLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         if(lastKnownLocation!=null) {
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())));
             mGoogleMap.moveCamera(CameraUpdateFactory.zoomBy(20));
         }
-        final ParseUser currentUser = ParseUser.getCurrentUser();
+
+
+
         if (currentUser!=null){
             if (ParseAnonymousUtils.isLinked(currentUser)){
                 fullUsername.setText("Anonymous");
@@ -159,7 +156,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             }
             else {
                 fullUsername.setText(currentUser.getUsername());
-                socialRank.setText(currentUser.getString("socialRank"));
                 ParseUser.getCurrentUser().fetchIfNeededInBackground(new GetCallback<ParseObject>() {
                     @Override
                     public void done(ParseObject parseObject, ParseException e) {
@@ -176,6 +172,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         }
         getStats(new StatsCallback());
         menuInflate(mMenu); //must be in onNavigateUpFromChild, but this method dont fires. TODO
+
     }
 
     @Override
@@ -309,22 +306,21 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     }
 
 
-    private void setPlotData(ArrayList<Long> years, ArrayList<Integer> numSightings){
+    private void setPlotData(ArrayList<Long> date, ArrayList<Integer> timeSpent){
 
 
         // create our series from our array of nums:
         XYSeries series2 = new SimpleXYSeries(
-                (List)years,
-                (List)numSightings,
+                (List)date,
+                (List)timeSpent,
                 "Social stats");
 
         // Create a formatter to use for drawing a series using LineAndPointRenderer:
         LineAndPointFormatter series2Format = new LineAndPointFormatter(Color.rgb(0,100,0),Color.rgb(0, 100, 0),                   // point color
-                Color.rgb(100, 200, 0), new PointLabelFormatter());
-        LineAndPointFormatter formatter  = new LineAndPointFormatter(Color.rgb(0, 0,0), Color.BLUE, Color.RED, new PointLabelFormatter());
-
+                Color.rgb(100, 200, 0), new PointLabelFormatter(Color.BLACK));
+        LineAndPointFormatter formatter  = new LineAndPointFormatter(Color.rgb(0, 0,0), Color.BLUE, Color.RED, new PointLabelFormatter(Color.BLACK));
         // draw a domain tick for each year:
-        statsPlot.setDomainStep(XYStepMode.SUBDIVIDE, years.size());
+        statsPlot.setDomainStep(XYStepMode.SUBDIVIDE, date.size());
         // setup our line fill paint to be a slightly transparent gradient:
         Paint lineFill = new Paint();
         lineFill.setAlpha(200);
@@ -376,6 +372,10 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         statsPlot.setGridPadding(0, 10, 5, 0);
 
 
+        Paint paTitleColor = new Paint();
+        paTitleColor.setAlpha(0);
+        paTitleColor.setColor(Color.BLACK);
+        statsPlot.getDomainLabelWidget().setLabelPaint(paTitleColor);
 
         statsPlot.getGraphWidget().setPaddingRight(2);
 
@@ -391,7 +391,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             // create a simple date format that draws on the year portion of our timestamp.
             // see http://download.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html
             // for a full description of SimpleDateFormat.
-            private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM d, ''yy");
+            private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM d");
 
             @Override
             public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
@@ -438,14 +438,79 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         while(iterator.hasNext()){
             tmpKey = (String) iterator.next();
             date.add(Long.valueOf(tmpKey));
+
+        }
+
+        Collections.sort(date);
+
+        for (Long tempDate: date){
             try {
-                tmpJson = stats.getJSONObject(tmpKey);
+                tmpJson = stats.getJSONObject(String.valueOf(tempDate)); //TODO tooo much String>Long>String
                 timeSpent.add((Integer) tmpJson.get(plotType));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
+
         setPlotData(date, timeSpent);
+    }
+
+    private String calcSocialStatus(JSONObject stats){
+        if (stats == null){
+            return "beginner";
+        }
+        Iterator iterator = stats.keys();
+        ArrayList<Long> date = new ArrayList<Long>();
+        ArrayList<Integer> timeSpent = new ArrayList<Integer>();
+        String tmpKey = null;
+        JSONObject tmpJson = null;
+        int overalltimeSocial=0;
+        float  socialRankfactor = 0;
+        int overallTime = 0;
+        String socialRankString = null;
+
+        while(iterator.hasNext()){
+            tmpKey = (String) iterator.next();
+            date.add(Long.valueOf(tmpKey));
+
+        }
+
+        Collections.sort(date);
+
+        for (Long tempDate: date){
+            try {
+                tmpJson = stats.getJSONObject(String.valueOf(tempDate)); //TODO tooo much String>Long>String
+                timeSpent.add((Integer) tmpJson.get(constants.fb)); //TODO redo
+                timeSpent.add((Integer) tmpJson.get(constants.vk));
+                timeSpent.add((Integer) tmpJson.get(constants.ok));
+                timeSpent.add((Integer) tmpJson.get(constants.in));
+                timeSpent.add((Integer) tmpJson.get(constants.vi));
+                timeSpent.add((Integer) tmpJson.get(constants.wa));
+                overallTime = (int) tmpJson.get(constants.ov);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        for (Integer time:timeSpent){
+            overalltimeSocial+=time;
+        }
+
+        socialRankfactor = overalltimeSocial/overallTime;
+        return calcRank(socialRankfactor);
+    }
+
+    private String calcRank(float factor){
+        if (factor>=0 & factor<0.1){return "begginer";}
+        if (factor>=0.1 & factor<0.2){return "concerned";}
+        if (factor>=0.2 & factor<0.3){return "occasional guest";}
+        if (factor>=0.3 & factor<0.4){return "involved";}
+        if (factor>=0.4 & factor<0.5){return "enthusiastic";}
+        if (factor>=0.5 & factor<0.6){return "begginer";}
+        if (factor>=0.6 & factor<0.7){return "venturesome";}
+        if (factor>=0.8 & factor<0.8){return "social prisoner";}
+        if (factor>=0.9 & factor<=1){return "social animal";}
+        return "none";
     }
 
 }

@@ -43,9 +43,9 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         style="@style/MipeTheme.StatsPlot"
-        androidPlot.graphWidget.domainLabelOrientation="-6"
+        androidPlot.graphWidget.domainLabelOrientation="-7"
         androidPlot.graphWidget.marginLeft="10dp"
-        androidPlot.graphWidget.marginBottom="40dp"
+        androidPlot.graphWidget.marginBottom="20dp"
 
         android:layout_marginTop="26dp" />
     <fragment
