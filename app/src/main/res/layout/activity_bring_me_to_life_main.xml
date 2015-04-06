@@ -30,6 +30,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="Social rank "
+        android:inputType="textMultiLine"
         android:id="@+id/socialrank"
         android:layout_below="@+id/fullusername"
         android:layout_alignLeft="@+id/fullusername"
@@ -53,11 +54,28 @@
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:name="com.google.android.gms.maps.MapFragment"
-        android:layout_marginTop="25dp"
+        android:layout_below="@+id/refreshFriends"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="@android:dimen/app_icon_size"
+        android:layout_height="@android:dimen/app_icon_size"
+        android:id="@+id/refreshStats"
+        android:layout_marginTop="36dp"
+        android:background="@android:drawable/ic_menu_rotate"
+        android:layout_below="@+id/socialrank"
+        android:layout_alignRight="@+id/statsPlot"
+        android:layout_alignEnd="@+id/statsPlot" />
+
+    <Button
+        android:layout_width="@android:dimen/app_icon_size"
+        android:layout_height="@android:dimen/app_icon_size"
+        android:id="@+id/refreshFriends"
+        android:background="@android:drawable/ic_menu_rotate"
         android:layout_below="@+id/statsPlot"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
-
 
 
 </RelativeLayout>

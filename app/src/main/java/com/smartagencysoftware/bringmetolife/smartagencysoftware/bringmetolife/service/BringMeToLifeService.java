@@ -3,11 +3,13 @@ package com.smartagencysoftware.bringmetolife.smartagencysoftware.bringmetolife.
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
@@ -15,6 +17,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -222,7 +225,7 @@ public class BringMeToLifeService extends Service {
         // wonder if mGoogleApiClient is ready by now...  TODO
         lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         //BringMeToLifeMainActivity.postInHandler("last know location is "+lastKnownLocation); //This probably causes crash when activity is already destroyed
-        launchParseCheckNearFriends(null);
+        launchParseCheckNearFriends(new CheckFriendsWithAlert());
         oldLastKnownLocation = lastKnownLocation;
         return true; //true == checkLife started
     }
@@ -453,6 +456,26 @@ public class BringMeToLifeService extends Service {
         @Override
         public void onExecute(Object friends) {
             BringMeToLifeMainActivity.postFriends((List<ParseUser>) friends);
+        }
+    }
+
+    private class CheckFriendsWithAlert implements ServiceCallback{
+        @Override
+        public void onExecute(Object friends) {
+            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+            if (powerManager.isScreenOn()&((List<ParseUser>) friends).size()!=0){
+                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+                builder.setTitle("There are "+((List<ParseUser>) friends).size()+" friends near." +" Try to socialize in real life!")
+                        .setCancelable(false)
+                        .setPositiveButton("OKAY...", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+                AlertDialog alert = builder.create();
+                alert.show();
+            }
         }
     }
 }

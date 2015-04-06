@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,6 +90,9 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private PointF minXY;
     private PointF maxXY;
     private JSONObject mStats;
+    private Button mRefreshStats;
+    private Button mRefreshFriends;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +111,8 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         fullUsername = (TextView)findViewById(R.id.fullusername);
         socialRank = (TextView)findViewById(R.id.socialrank);
         mAvatar = (CircleImageView)findViewById(R.id.avatar);
+        mRefreshStats = (Button) findViewById(R.id.refreshStats);
+        mRefreshFriends = (Button) findViewById(R.id.refreshFriends);
         mGoogleMapFragment = (MapFragment)getFragmentManager().findFragmentById(R.id.map);
         mGoogleMap = mGoogleMapFragment.getMap();
 
@@ -122,6 +128,18 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             }
         });
 
+        mRefreshStats.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getStats(new StatsCallback());
+            }
+        });
+        mRefreshFriends.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendToService("checkFriends");
+            }
+        });
         setUpStatsGraph();
     }
 
@@ -138,7 +156,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         final ParseUser currentUser = ParseUser.getCurrentUser();
-        socialRank.setText(currentUser.getString("social rank"));
         lastKnownLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         if(lastKnownLocation!=null) {
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())));
@@ -307,14 +324,12 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
 
     private void setPlotData(ArrayList<Long> date, ArrayList<Integer> timeSpent){
-
-
+        statsPlot.clear();
         // create our series from our array of nums:
         XYSeries series2 = new SimpleXYSeries(
                 (List)date,
                 (List)timeSpent,
                 "Social stats");
-
         // Create a formatter to use for drawing a series using LineAndPointRenderer:
         LineAndPointFormatter series2Format = new LineAndPointFormatter(Color.rgb(0,100,0),Color.rgb(0, 100, 0),                   // point color
                 Color.rgb(100, 200, 0), new PointLabelFormatter(Color.BLACK));
@@ -338,9 +353,6 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
     private void setUpStatsGraph(){
         statsPlot = (XYPlot) findViewById(R.id.statsPlot);
-
-
-
         statsPlot.getGraphWidget().getGridBackgroundPaint().setColor(Color.TRANSPARENT);
         statsPlot.getGraphWidget().getBackgroundPaint().setColor(Color.TRANSPARENT);
         statsPlot.getGraphWidget().getDomainGridLinePaint().setColor(Color.BLACK);
@@ -415,21 +427,27 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
 
     private void getStats(final StatsCallback callback){
         ParseQuery<ParseObject> query = ParseQuery.getQuery("stats");
+        query.whereEqualTo("parent", ParseUser.getCurrentUser().getObjectId());
         query.getFirstInBackground(new GetCallback<ParseObject>() {
             @Override
             public void done(ParseObject parseObject, ParseException e) {
-                  callback.onExecute(parseObject.getJSONObject("stats"));
+                  if(e==null) {
+                      callback.onExecute(parseObject.getJSONObject("stats"));
+                  }
             }
         });
     }
 
     private class StatsCallback{
         void onExecute(JSONObject stats){
+            mStats = stats;
+            socialRank.setText(calcSocialStatus(mStats));
             setPlotData(stats, "overall");
         }
     }
 
     private void setPlotData(JSONObject stats, String plotType) {
+        if(stats ==null) {return;}
         Iterator iterator = stats.keys();
         ArrayList<Long> date = new ArrayList<Long>();
         ArrayList<Integer> timeSpent = new ArrayList<Integer>();
@@ -486,7 +504,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
                 timeSpent.add((Integer) tmpJson.get(constants.in));
                 timeSpent.add((Integer) tmpJson.get(constants.vi));
                 timeSpent.add((Integer) tmpJson.get(constants.wa));
-                overallTime = (int) tmpJson.get(constants.ov);
+                overallTime += (int) tmpJson.get(constants.ov);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
