@@ -237,6 +237,10 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
                 intent = new Intent(this, Choose.class);
                 startActivity(intent);
                 break;
+            case R.id.action_addfriends:
+                intent = new Intent(this, FriendsActivity.class);
+                startActivity(intent);
+                break;
         }
 
         return super.onOptionsItemSelected(item);
