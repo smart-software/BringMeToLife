@@ -1,81 +1,113 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context=".BringMeToLifeMainActivity">
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:fillViewport="true"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
 
-    <de.hdodenhof.circleimageview.CircleImageView
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/avatar"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        app:border_width="1dp"
-
-        app:border_color="@color/MipeTheme.additional.facebook.blue"
-        android:background="@mipmap/deer" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Full Username "
-        android:id="@+id/fullusername"
-        android:layout_alignTop="@+id/avatar"
-        android:layout_centerHorizontal="true" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Social rank "
-        android:inputType="textMultiLine"
-        android:id="@+id/socialrank"
-        android:layout_below="@+id/fullusername"
-        android:layout_alignLeft="@+id/fullusername"
-        android:layout_alignStart="@+id/fullusername" />
-    <com.androidplot.xy.XYPlot
-        android:id="@+id/statsPlot"
-        android:layout_width="fill_parent"
-        android:layout_height="200dp"
-        title="Yearly UFO Sightings"
-        android:layout_below="@+id/avatar"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        style="@style/MipeTheme.StatsPlot"
-        androidPlot.graphWidget.domainLabelOrientation="-7"
-        androidPlot.graphWidget.marginLeft="10dp"
-        androidPlot.graphWidget.marginBottom="20dp"
-
-        android:layout_marginTop="26dp" />
-    <fragment
-        android:id="@+id/map"
+    >
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:name="com.google.android.gms.maps.MapFragment"
-        android:layout_below="@+id/refreshFriends"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_height="wrap_content" android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        tools:context=".BringMeToLifeMainActivity">
 
-    <Button
-        android:layout_width="@android:dimen/app_icon_size"
-        android:layout_height="@android:dimen/app_icon_size"
-        android:id="@+id/refreshStats"
-        android:layout_marginTop="36dp"
-        android:background="@android:drawable/ic_menu_rotate"
-        android:layout_below="@+id/socialrank"
-        android:layout_alignRight="@+id/statsPlot"
-        android:layout_alignEnd="@+id/statsPlot" />
+        <de.hdodenhof.circleimageview.CircleImageView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/avatar"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            app:border_width="1dp"
 
-    <Button
-        android:layout_width="@android:dimen/app_icon_size"
-        android:layout_height="@android:dimen/app_icon_size"
-        android:id="@+id/refreshFriends"
-        android:background="@android:drawable/ic_menu_rotate"
-        android:layout_below="@+id/statsPlot"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+            app:border_color="@color/MipeTheme.additional.facebook.blue"
+            android:background="@mipmap/deer" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Full Username "
+            android:id="@+id/fullusername"
+            android:layout_alignTop="@+id/avatar"
+            android:layout_centerHorizontal="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Social rank "
+            android:inputType="textMultiLine"
+            android:id="@+id/socialrank"
+            android:layout_below="@+id/fullusername"
+            android:layout_alignLeft="@+id/fullusername"
+            android:layout_alignStart="@+id/fullusername" />
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/statsPlot"
+            android:layout_width="fill_parent"
+            android:layout_height="200dp"
+            title="Yearly UFO Sightings"
+            style="@style/MipeTheme.StatsPlot"
+            androidPlot.graphWidget.domainLabelOrientation="-7"
+            androidPlot.graphWidget.marginLeft="10dp"
+            androidPlot.graphWidget.marginBottom="20dp"
+
+            android:layout_below="@+id/refreshStats"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+        <fragment
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:name="com.google.android.gms.maps.MapFragment"
+            android:layout_below="@+id/refreshFriends"
+            android:layout_toRightOf="@+id/socialrank"
+            android:layout_toEndOf="@+id/socialrank" />
+
+        <Button
+            android:layout_width="@android:dimen/app_icon_size"
+            android:layout_height="@android:dimen/app_icon_size"
+            android:id="@+id/refreshStats"
+            android:background="@android:drawable/ic_menu_rotate"
+            android:layout_below="@+id/map"
+            android:layout_alignRight="@+id/statsPlot"
+            android:layout_alignEnd="@+id/statsPlot"
+            android:layout_marginTop="55dp" />
+
+        <Button
+            android:layout_width="@android:dimen/app_icon_size"
+            android:layout_height="@android:dimen/app_icon_size"
+            android:id="@+id/refreshFriends"
+            android:background="@android:drawable/ic_menu_rotate"
+            android:layout_below="@+id/avatar"
+            android:layout_alignRight="@+id/map"
+            android:layout_alignEnd="@+id/map" />
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/statsList"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignTop="@+id/map"
+            android:layout_toStartOf="@+id/map"
+            android:layout_toLeftOf="@+id/map"
+            android:layout_alignBottom="@+id/refreshStats" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Total"
+            android:id="@+id/textView"
+            android:layout_above="@+id/statsList"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
 
-</RelativeLayout>
+    </RelativeLayout>
+
+
+</ScrollView>
+

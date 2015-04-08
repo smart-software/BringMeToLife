@@ -20,8 +20,11 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -92,6 +95,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     private JSONObject mStats;
     private Button mRefreshStats;
     private Button mRefreshFriends;
+    private ListView mStatsListView;
 
 
     @Override
@@ -113,6 +117,28 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         mAvatar = (CircleImageView)findViewById(R.id.avatar);
         mRefreshStats = (Button) findViewById(R.id.refreshStats);
         mRefreshFriends = (Button) findViewById(R.id.refreshFriends);
+        mStatsListView = (ListView) findViewById(R.id.statsList);
+        mStatsListView.setOnTouchListener(new ListView.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        // Disallow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+                        // Allow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(false);
+                        break;
+                }
+
+                // Handle ListView touch events.
+                v.onTouchEvent(event);
+                return true;
+            }
+        });
         mGoogleMapFragment = (MapFragment)getFragmentManager().findFragmentById(R.id.map);
         mGoogleMap = mGoogleMapFragment.getMap();
 
@@ -354,6 +380,37 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
         minXY=new PointF(statsPlot.getCalculatedMinX().floatValue(),statsPlot.getCalculatedMinY().floatValue());
         maxXY=new PointF(statsPlot.getCalculatedMaxX().floatValue(),statsPlot.getCalculatedMaxY().floatValue());
         statsPlot.redraw();
+     }
+
+    private void setStatsTotalList(JSONObject totalStats){
+        String tmpKey = null;
+        JSONObject tmpJSON = null;
+        ArrayList<String> list = new ArrayList<String>();
+        Iterator iterator = totalStats.keys();
+        int fb=0,vk=0,wa=0,ok=0,vi=0,in=0,ov = 0;
+        while (iterator.hasNext()){
+            tmpKey = (String) iterator.next();
+            try {
+                tmpJSON = totalStats.getJSONObject(tmpKey);
+                fb+=tmpJSON.getInt(constants.fb); //TODO redo
+                vk+=tmpJSON.getInt(constants.vk);
+                wa+=tmpJSON.getInt(constants.wa);
+                ok+=tmpJSON.getInt(constants.ok);
+                vi+=tmpJSON.getInt(constants.vi);
+                in+=tmpJSON.getInt(constants.in);
+                ov+=tmpJSON.getInt(constants.ov);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        list.add("overall"+ov);
+        list.add("facebook"+fb);
+        list.add("vkontakte"+vk);
+        list.add("whatsapp"+wa);
+        list.add("odnoklassniki"+ok);
+        list.add("viber"+vi);
+        list.add("instagramm"+in);
+        mStatsListView.setAdapter(new ArrayAdapter<String>(getApplicationContext(), R.layout.item_stats_list,list));
     }
 
     private void setUpStatsGraph(){
@@ -448,6 +505,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
             mStats = stats;
             socialRank.setText(calcSocialStatus(mStats));
             setPlotData(stats, "overall");
+            setStatsTotalList(stats);
         }
     }
 
