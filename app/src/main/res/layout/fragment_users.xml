@@ -26,7 +26,7 @@
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/searchUsersButton"
         android:layout_toStartOf="@+id/searchUsersButton"
-        android:text="enter username" />
+        android:hint="enter username"/>
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -42,7 +42,8 @@
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
+        android:visibility="invisible"
+        android:id="@+id/usersProgressBar"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 

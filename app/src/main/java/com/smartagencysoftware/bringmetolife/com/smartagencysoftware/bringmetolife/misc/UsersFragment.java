@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.parse.ParseException;
 import com.parse.ParseUser;
@@ -43,6 +44,7 @@ public class UsersFragment extends Fragment {
     private Button mSearchButton;
     private EditText mEditText;
     private List<ParseUser> mParseUserList;
+    ProgressBar mUsersProgressBar;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -66,9 +68,10 @@ public class UsersFragment extends Fragment {
         mUsersList = (ListView) rootView.findViewById(R.id.listUsers);
         mSearchButton = (Button) rootView.findViewById(R.id.searchUsersButton);
         mEditText = (EditText)rootView.findViewById(R.id.searchUsername);
-
+        mUsersProgressBar = (ProgressBar) rootView.findViewById(R.id.usersProgressBar);
         mSearchButton.setOnClickListener(new OnClickSearchListener());
         mUsersList.setOnItemClickListener(new OnClickListListener());
+
         return rootView;
     }
 
@@ -85,6 +88,7 @@ public class UsersFragment extends Fragment {
         public void onClick(View v) {
             String username = mEditText.getText().toString();
             mParseUserList = new ArrayList<ParseUser>();
+            mUsersProgressBar.setVisibility(View.VISIBLE);
             Pgetter.users(username,new UsersCallback(getActivity()));
         }
     }
@@ -129,7 +133,18 @@ public class UsersFragment extends Fragment {
         }
         @Override
         public void run(Object object) {
+            mUsersProgressBar.setVisibility(View.INVISIBLE);
             mParseUserList = (List<ParseUser>) object;
+            if (mParseUserList.isEmpty()){
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setPositiveButton("No user with such name", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                return;
+            }
             String[] users = new String[mParseUserList.size()];
             for (int i=0; i< mParseUserList.size();i++){
                 users[i] = mParseUserList.get(i).getUsername();
@@ -145,7 +160,12 @@ public class UsersFragment extends Fragment {
             if(e!=null){e.printStackTrace();}
             else{
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setMessage("Friend added!");
+                builder.setMessage("Friend added!").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
                 builder.create().show();
             }
         }

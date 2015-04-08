@@ -156,6 +156,7 @@ public class BringMeToLifeMainActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         final ParseUser currentUser = ParseUser.getCurrentUser();
+        currentUser.fetchInBackground();
         lastKnownLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         if(lastKnownLocation!=null) {
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())));

@@ -7,6 +7,7 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,30 +15,44 @@ import java.util.List;
  */
 public class Pgetter {
     public static void friends(final PgetterCallback callback){
-        class Async extends AsyncTask<Void,Void,Void>{
+        class Async extends AsyncTask<Object,Object,Object>{
             @Override
-            protected Void doInBackground(Void... noparams) {
+            protected Object doInBackground(Object... params) {
                 ParseUser currentUser = ParseUser.getCurrentUser();
                 List<ParseUser> friends = null;
                 if (currentUser!=null){
                     try {
-                        currentUser.fetchIfNeeded();
+                        currentUser.fetch();
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
                     List<String> listFriends = currentUser.getList("friendsId");
                     if (listFriends!=null && listFriends.size()>0) {
                         ParseQuery<ParseUser> query = ParseUser.getQuery();
-                        query.whereContainedIn("objectId", currentUser.getList(""));
+                        List<String> friendsList = currentUser.getList("friendsId");
+                        if (friendsList.isEmpty()){
+                            List<ParseUser> list = new ArrayList<ParseUser>();
+                            ParseUser dummy = new ParseUser();
+                            dummy.setUsername("no friends");
+                            list.add(new ParseUser());
+                            return list;
+                        }
+                        query.whereContainedIn("objectId", friendsList);
                         try {
                             friends = query.find();
                         } catch (ParseException e) {
                             e.printStackTrace();
                         }
-                        callback.run(friends);
+
                     }
                 }
-                return null;
+                return friends;
+            }
+
+            @Override
+            protected void onPostExecute(Object friends) {
+                callback.run(friends);
+                super.onPostExecute(friends);
             }
         }
         Async task = new Async();
@@ -45,15 +60,14 @@ public class Pgetter {
     }
 
     public static void users(final String username,final PgetterCallback callback){
-        class Async extends AsyncTask<Void,Void,Void>{
-
+        class Async extends AsyncTask<Object,Object,Object>{
             @Override
-            protected Void doInBackground(Void... noparams) {
+            protected Object doInBackground(Object... params) {
                 ParseUser currentUser = ParseUser.getCurrentUser();
                 List<ParseUser> users = null;
                 if (currentUser!=null){
                     try {
-                        currentUser.fetchIfNeeded();
+                        currentUser.fetch();
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
@@ -70,8 +84,13 @@ public class Pgetter {
                         e.printStackTrace();
                     }
                 }
+                return users;
+            }
+
+            @Override
+            protected void onPostExecute(Object users) {
                 callback.run(users);
-                return null;
+                super.onPostExecute(users);
             }
         }
         Async task = new Async();

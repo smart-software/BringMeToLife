@@ -19,11 +19,6 @@ public class Psetter {
             @Override
             protected Void doInBackground(Void... params) {
                 ParseUser currentUser = ParseUser.getCurrentUser();
-                try {
-                    currentUser.fetchIfNeeded();
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
                 currentUser.add("friendsId", userId);
 
                 currentUser.saveInBackground(new SaveCallback() {
@@ -35,6 +30,8 @@ public class Psetter {
                 return null;
             }
         }
+        Async async = new Async();
+        async.execute();
     }
 
     //misc

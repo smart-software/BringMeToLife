@@ -4,6 +4,7 @@ package com.smartagencysoftware.bringmetolife.com.smartagencysoftware.bringmetol
  * Created by Alexey on 07.04.2015.
  */
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,7 @@ import com.parse.ParseUser;
 import com.smartagencysoftware.bringmetolife.R;
 import com.smartagencysoftware.bringmetolife.parse.Pgetter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static android.R.layout.simple_list_item_1;
@@ -74,6 +76,16 @@ public class FriendsFragment extends Fragment {
         @Override
         public void run(Object object) {
             List<ParseUser> list = (List<ParseUser>) object;
+            if (list==null){
+                list = new ArrayList<ParseUser>();
+            }
+            if(list.isEmpty()){
+                ParseUser dummy = new ParseUser();
+                dummy.setUsername("No friends");
+                list.add(dummy);
+            }
+
+
             String[] users = new String[list.size()];
             for (int i=0; i<list.size();i++){
                 users[i] = list.get(i).getUsername();
